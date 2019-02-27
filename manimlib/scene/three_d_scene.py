@@ -68,7 +68,7 @@ class ThreeDScene(Scene):
                 self.camera.frame_center.move_to,
                 frame_center
             ))
-        is_camera_rotating = self.ambient_camera_rotation in self.continual_animations
+        is_camera_rotating = False # self.ambient_camera_rotation in self.continual_animations
         if is_camera_rotating:
             self.remove(self.ambient_camera_rotation)
         self.play(*anims + added_anims)

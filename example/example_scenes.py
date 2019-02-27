@@ -3,7 +3,7 @@
 from manimlib import *
 
 # To watch one of these scenes, run the following:
-# python -m manim example_scenes.py SquareToCircle -pl
+# python -m manimlib example_scenes.py SquareToCircle -pl
 #
 # Use the flat -l for a faster rendering at a lower
 # quality.
@@ -60,23 +60,6 @@ class FiniteElement(Scene):
                 Transform(poisson_strong, poisson_weak)
             )
             self.wait()
-
-
-            #        import meshio
-            #        mesh = meshio.read('cylinder.msh')
-            #        cells = mesh.cells['tetra']
-            #        points = mesh.points
-
-            #        group = VGroup()
-            #        for i in range(len(cells)):
-            #            x = cells[i, :]
-            #            group.add(Polygon(points[x[0]], points[x[1]], points[x[2]]))
-            #            group.add(Polygon(points[x[1]], points[x[2]], points[x[3]]))
-            #            group.add(Polygon(points[x[2]], points[x[3]], points[x[0]]))
-            #            group.add(Polygon(points[x[3]], points[x[0]], points[x[1]]))
-
-            #        self.play(ShowCreation(group))
-            #        self.wait()
 
             mesh = VGroup()
             n = 5

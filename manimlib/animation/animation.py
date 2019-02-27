@@ -31,6 +31,7 @@ class Animation(object):
         assert(isinstance(mobject, Mobject))
         digest_config(self, kwargs)
         self.mobject = mobject
+        self.starting_mobject = mobject.copy()
 
     def __str__(self):
         if self.name:

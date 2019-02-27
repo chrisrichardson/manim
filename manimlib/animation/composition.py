@@ -24,6 +24,8 @@ class AnimationGroup(Animation):
         # from one and other.
         "lag_ratio": 0,
         "group": None,
+        "max_end_time": 0,
+        "anims_with_timings": [],
     }
 
     def __init__(self, *animations, **kwargs):

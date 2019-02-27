@@ -9,8 +9,8 @@ from colour import Color
 import numpy as np
 
 from manimlib.constants import *
-from manimlib.container.container import Container
 from manimlib.utils.color import color_gradient
+from manimlib.utils.config_ops import digest_config
 from manimlib.utils.color import interpolate_color
 from manimlib.utils.iterables import list_update
 from manimlib.utils.iterables import remove_list_redundancies
@@ -23,23 +23,20 @@ from manimlib.utils.space_ops import rotation_matrix
 
 # TODO: Explain array_attrs
 
-class Mobject(Container):
+class Mobject(object):
     """
     Mathematical Object
     """
-    CONFIG = {
-        "color": WHITE,
-        "name": None,
-        "dim": 3,
-        "target": None,
-    }
 
-    def __init__(self, **kwargs):
-        Container.__init__(self, **kwargs)
+    def __init__(self, color=WHITE, name=None, dim=3, target=None, **kwargs):
+
+        self.color = Color(color)
+        self.name = self.__class__.__name__ if name is None else name
+        self.dim = dim
+        self.target = target
+        digest_config(self, kwargs)
+
         self.submobjects = []
-        self.color = Color(self.color)
-        if self.name is None:
-            self.name = self.__class__.__name__
         self.updaters = []
         self.updating_suspended = False
         self.reset_points()

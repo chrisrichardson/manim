@@ -95,7 +95,7 @@ class FiniteElement(Scene):
                 A.add(aij)
                 vij = DecimalNumber(
                     float(i-j),
-                    num_decimal_places=2                )
+                    num_decimal_places=2)
                 vij.scale(0.5)
                 vij.move_to(np.array([x0+j*dx, y0+i*dy, 0]))
                 transform_A.add(vij)

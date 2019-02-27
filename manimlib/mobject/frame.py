@@ -4,12 +4,10 @@ from manimlib.utils.config_ops import digest_config
 
 
 class ScreenRectangle(Rectangle):
-    CONFIG = {
-        "aspect_ratio": 16.0 / 9.0,
-        "height": 4
-    }
 
-    def __init__(self, **kwargs):
+    def __init__(self, aspect_ratio=16/9, height=4, **kwargs):
+        self.aspect_ratio = aspect_ratio
+        self.height = 4
         Rectangle.__init__(self, **kwargs)
         self.set_width(
             self.aspect_ratio * self.get_height(),

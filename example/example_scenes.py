@@ -47,18 +47,14 @@ class FiniteElement(Scene):
             poisson_strong = TexMobject(r"\nabla^2 u = \rho")
             poisson_strong.scale(1.5)
 
-            self.play(
-                Transform(title, transform_title),
-                LaggedStart(FadeInFrom(poisson_strong, UP))
-            )
+            self.play(Transform(title, transform_title),
+                      LaggedStart(FadeInFrom(poisson_strong, UP)))
             self.wait()
 
             poisson_weak = TexMobject(r"\int \nabla u \cdot \nabla v\ d\Omega = \int \rho\ v d\Omega")
             print(UP, LEFT, RIGHT, OUT, IN, ORIGIN, DOWN)
             poisson_weak.to_corner(2*UP + LEFT)
-            self.play(
-                Transform(poisson_strong, poisson_weak)
-            )
+            self.play(Transform(poisson_strong, poisson_weak))
             self.wait()
 
             mesh = VGroup()
@@ -120,18 +116,12 @@ class OpeningManimExample(Scene):
             "\\frac{1}{n^2} = \\frac{\\pi^2}{6}"
         )
         VGroup(title, basel).arrange(DOWN)
-        self.play(
-            Write(title),
-            FadeInFrom(basel, UP),
-        )
+        self.play(Write(title), FadeInFrom(basel, UP))
         self.wait()
 
         transform_title = TextMobject("That was a transform")
         transform_title.to_corner(UP + LEFT)
-        self.play(
-            Transform(title, transform_title),
-            LaggedStart(*map(FadeOutAndShiftDown, basel)),
-        )
+        self.play(Transform(title, transform_title), LaggedStart(*map(FadeOutAndShiftDown, basel)))
         self.wait()
 
         grid = NumberPlane()
@@ -140,11 +130,8 @@ class OpeningManimExample(Scene):
         grid_title.move_to(transform_title)
 
         self.add(grid, grid_title)  # Make sure title is on top of grid
-        self.play(
-            FadeOut(title),
-            FadeInFromDown(grid_title),
-            ShowCreation(grid, run_time=3, lag_ratio=0.1),
-        )
+        self.play(FadeOut(title), FadeInFromDown(grid_title),
+                  ShowCreation(grid, run_time=3, lag_ratio=0.1))
         self.wait()
 
         grid_transform_title = TextMobject(
@@ -153,15 +140,12 @@ class OpeningManimExample(Scene):
         )
         grid_transform_title.move_to(grid_title, UL)
         grid.prepare_for_nonlinear_transform()
-        self.play(
-            grid.apply_function,
-            lambda p: p + np.array([
-                np.sin(p[1]),
-                np.sin(p[0]),
-                0,
-            ]),
-            run_time=3,
-        )
+
+        grid.generate_target()
+        grid.target.apply_function(lambda p:
+                                   p + np.array([np.sin(p[1]), np.sin(p[0]), 0]))
+
+        self.play(MoveToTarget(grid, run_time=3))
         self.wait()
         self.play(
             Transform(grid_title, grid_transform_title)
@@ -214,20 +198,20 @@ class UdatersExample(Scene):
     def construct(self):
         decimal = DecimalNumber(
             0,
-            show_ellipsis=True,
-            num_decimal_places=3,
+            show_ellipsis=False,
+            num_decimal_places=6,
             include_sign=True,
         )
         square = Square().to_edge(UP)
 
         decimal.add_updater(lambda d: d.next_to(square, RIGHT))
         decimal.add_updater(lambda d: d.set_value(square.get_center()[1]))
+
         self.add(square, decimal)
-        self.play(
-            square.to_edge, DOWN,
-            rate_func=there_and_back,
-            run_time=5,
-        )
+
+        square.generate_target()
+        square.target.to_corner(DOWN + LEFT)
+        self.play(MoveToTarget(square, rate_func=there_and_back, run_time=10))
         self.wait()
 
 # See old_projects folder for many, many more

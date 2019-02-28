@@ -13,12 +13,12 @@ class Simple(Scene):
         self.play(FadeInFrom(title, UP))
         self.wait()
 
-        obj = DecimalNumber(-10)
+        obj = DecimalNumber(-3.14159)
         obj.scale(3)
         self.play(FadeIn(obj))
         self.wait()
-
-        return
+        self.play(FadeOut(obj))
+        self.wait()
 
         x = np.linspace(-1,1)
         y = np.sin(8*x)
@@ -40,10 +40,10 @@ class Simple(Scene):
         img2.to_corner(UP + RIGHT)
         self.play(Transform(img, img2))
 
-        transform_title = title.copy()
-        transform_title.scale(0.5)
-        transform_title.to_corner(UP + LEFT)
-        self.play(Transform(title, transform_title))
+        title.generate_target()
+        title.target.scale(0.5)
+        title.target.to_corner(UP + LEFT)
+        self.play(MoveToTarget(title))
         self.wait()
 
         tri = Polygon([0,0,0],[0,1,0],[1,0,0], color=GREEN_B)

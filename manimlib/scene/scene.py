@@ -10,14 +10,14 @@ from manimlib.animation.creation import Write
 from manimlib.animation.transform import MoveToTarget, ApplyMethod
 from manimlib.camera.camera import Camera
 from manimlib.constants import *
-from manimlib.container.container import Container
+from manimlib.utils.config_ops import digest_config
 from manimlib.mobject.mobject import Mobject
 from manimlib.mobject.svg.tex_mobject import TextMobject
 from manimlib.scene.scene_file_writer import SceneFileWriter
 from manimlib.utils.iterables import list_update
 
 
-class Scene(Container):
+class Scene(object):
     CONFIG = {
         "camera_class": Camera,
         "camera_config": {},
@@ -31,7 +31,7 @@ class Scene(Container):
     }
 
     def __init__(self, **kwargs):
-        Container.__init__(self, **kwargs)
+        digest_config(self, kwargs)
         self.camera = self.camera_class(**self.camera_config)
         self.file_writer = SceneFileWriter(
             self, **self.file_writer_config,

@@ -22,7 +22,7 @@ class CameraFrame(VGroup):
 
 class MovingCamera(Camera):
     """
-    Stays in line with the height, width and position of it's 'frame', which is a Rectangle
+    Stays in line with the height, width and position of its 'frame', which is a Rectangle
     """
 
     CONFIG = {

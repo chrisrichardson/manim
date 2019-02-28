@@ -41,7 +41,7 @@ for folder in [FILE_DIR, RASTER_IMAGE_DIR, SVG_IMAGE_DIR, VIDEO_DIR,
 
 TEX_TEXT_TO_REPLACE = "YourTextHere"
 
-TEMPLATE_TEXT_FILE_BODY = r"""
+TEMPLATE_TEXT_BODY = r"""
 \documentclass[preview]{standalone}
 
 \usepackage[english]{babel}
@@ -67,7 +67,7 @@ TEMPLATE_TEXT_FILE_BODY = r"""
 \begin{document}
 """ + TEX_TEXT_TO_REPLACE + r"\end{document}"
 
-TEMPLATE_TEX_FILE_BODY = TEMPLATE_TEXT_FILE_BODY.replace(TEX_TEXT_TO_REPLACE,
+TEMPLATE_TEX_BODY = TEMPLATE_TEXT_BODY.replace(TEX_TEXT_TO_REPLACE,
         "\\begin{align*}\n" + TEX_TEXT_TO_REPLACE + "\n\\end{align*}")
 
 HELP_MESSAGE = """

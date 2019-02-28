@@ -882,8 +882,8 @@ class Mobject(object):
             point = mobject_or_point
 
         for dim in range(self.dim):
-            if direction[dim] != 0:
-                self.set_coord(point[dim], dim, direction)
+            if alignment_vect[dim] != 0:
+                self.set_coord(point[dim], dim, alignment_vect)
         return self
 
     # Family matters

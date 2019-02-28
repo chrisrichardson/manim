@@ -10,54 +10,55 @@ from manimlib.animation.creation import Write
 from manimlib.animation.transform import MoveToTarget, ApplyMethod
 from manimlib.camera.camera import Camera
 from manimlib.constants import *
+from manimlib.container.container import Container
 from manimlib.mobject.mobject import Mobject
 from manimlib.mobject.svg.tex_mobject import TextMobject
 from manimlib.scene.scene_file_writer import SceneFileWriter
 from manimlib.utils.iterables import list_update
 
 
-class Scene(object):
+class Scene(Container):
+    CONFIG = {
+        "camera_class": Camera,
+        "camera_config": {},
+        "file_writer_config": {},
+        "skip_animations": False,
+        "always_update_mobjects": False,
+        "random_seed": 0,
+        "start_at_animation_number": None,
+        "end_at_animation_number": None,
+        "leave_progress_bars": False,
+    }
 
-    def __init__(self, camera_class=Camera, **kwargs):
-
-        self.camera_class = camera_class
-        self.camera_config = kwargs.get("camera_config", {})
-        self.file_writer_config = kwargs.get("file_writer_config", {})
-        self.skip_animations = kwargs.get("skip_animations", False)
-        self.always_update_mobjects = kwargs.get("always_update_mobjects", False)
-        self.random_seed = kwargs.get("random_seed", 0)
-        self.start_at_animation_number = kwargs.get("start_at_animation_number")
-        self.end_at_animation_number = kwargs.get("end_at_animation_number")
-        self.leave_progress_bars = kwargs.get("leave_progress_bars", False)
-
+    def __init__(self, **kwargs):
+        Container.__init__(self, **kwargs)
         self.camera = self.camera_class(**self.camera_config)
-        self.file_writer = SceneFileWriter(self, **self.file_writer_config)
+        self.file_writer = SceneFileWriter(
+            self, **self.file_writer_config,
+        )
 
         self.mobjects = []
         # TODO, remove need for foreground mobjects
         self.foreground_mobjects = []
         self.num_plays = 0
         self.time = 0
-        self.original_skipping_status = self.skip_animations
-
+#        self.original_skipping_status = self.skip_animations
         if self.random_seed is not None:
             random.seed(self.random_seed)
             np.random.seed(self.random_seed)
 
         self.setup()
-
         try:
             self.construct()
         except EndSceneEarlyException:
             pass
-
         self.tear_down()
         self.file_writer.finish()
         self.print_end_message()
 
     def setup(self):
         """
-        This is meant to be implemented by any scenes which
+        This is meant to be implement by any scenes which
         are comonly subclassed, and have some common setup
         involved before the construct method is called.
         """

@@ -31,6 +31,7 @@ from manimlib.utils.rate_functions import wiggle
 
 
 class FocusOn(Transform):
+    """ Briefly ping a translucent Dot over Mobject """
     CONFIG = {
         "opacity": 0.2,
         "color": GREY,
@@ -62,6 +63,7 @@ class FocusOn(Transform):
 
 
 class Indicate(Transform):
+    """ Indicate an Mobject by flashing it yellow briefly """
     CONFIG = {
         "rate_func": there_and_back,
         "scale_factor": 1.2,
@@ -76,6 +78,7 @@ class Indicate(Transform):
 
 
 class Flash(AnimationGroup):
+    """ Draw a radiating set of yellow lines briefly around an Mobject """
     CONFIG = {
         "line_length": 0.2,
         "num_lines": 12,
@@ -227,6 +230,7 @@ class ShowCreationThenFadeAround(AnimationOnSurroundingRectangle):
 
 
 class ApplyWave(Homotopy):
+    """ Tilt Mobject left and right briefly """
     CONFIG = {
         "direction": UP,
         "amplitude": 0.2,
@@ -249,6 +253,7 @@ class ApplyWave(Homotopy):
 
 
 class WiggleOutThenIn(Animation):
+    """ Shake Mobject around whilst enlarging briefly """
     CONFIG = {
         "scale_value": 1.1,
         "rotation_angle": 0.01 * TAU,

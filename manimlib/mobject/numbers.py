@@ -33,10 +33,8 @@ class DecimalNumber(VMobject):
             else:
                 num_string = num_string[1:]
 
-        self.add(*[
-            SingleStringTexMobject(char, **kwargs)
-            for char in num_string
-        ])
+        self.add(*[SingleStringTexMobject(char, **kwargs)
+                   for char in num_string])
 
         # Add non-numerical bits
         if self.show_ellipsis:
@@ -61,7 +59,7 @@ class DecimalNumber(VMobject):
         # Handle alignment of parts that should be aligned
         # to the bottom
         for i, c in enumerate(num_string):
-            if c == "-" and len(num_string) > i + 1:
+            if c == "-":
                 self[i].align_to(self[i + 1], alignment_vect=UP)
             elif c == ",":
                 self[i].shift(self[i].get_height() * DOWN / 2)

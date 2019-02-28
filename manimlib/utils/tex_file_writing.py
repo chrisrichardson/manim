@@ -57,7 +57,7 @@ def tex_to_dvi(tex_file):
     return result
 
 
-def dvi_to_svg(dvi_file, regen_if_exists=False):
+def dvi_to_svg(dvi_file):
     """
     Converts a dvi, which potentially has multiple slides, into a
     directory full of enumerated pngs corresponding with these slides.

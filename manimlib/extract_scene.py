@@ -6,7 +6,7 @@ import subprocess as sp
 import sys
 import traceback
 
-from manimlib.scene.scene import Scene
+from manimlib.scene.scene import Scene, EndSceneEarlyException
 from manimlib.utils.sounds import play_error_sound
 from manimlib.utils.sounds import play_finish_sound
 import manimlib.constants
@@ -155,7 +155,17 @@ def main(config):
             except EndSceneEarlyException:
                 pass
 
-            scene.file_writer.finish()
+            if scene.start_at_animation_number is not None:
+                f_start = scene.start_at_animation_number
+            else:
+                f_start = 0
+
+            if scene.end_at_animation_number is not None:
+                f_end = scene.end_at_animation_number
+            else:
+                f_end = scene.num_plays
+
+            scene.file_writer.finish([f_start, f_end])
             scene.print_end_message()
 
             open_file_if_needed(scene.file_writer, **config)

@@ -26,47 +26,35 @@ class SceneFileWriter(object):
 
     def __init__(self, scene, **kwargs):
         digest_config(self, kwargs)
-        self.scene = scene
+
+        pixel_height = scene.camera.pixel_height
+        frame_rate = scene.camera.frame_rate
+        self.movie_directory = "{}p{}".format(pixel_height, frame_rate)
+
         self.stream_lock = False
         self.init_output_directories()
         self.init_audio()
 
     # Output directories and files
     def init_output_directories(self):
-        output_directory = self.output_directory or self.get_default_output_directory()
-        file_name = self.file_name or self.get_default_file_name()
 
         if self.write_to_movie:
             movie_dir = guarantee_existence(os.path.join(
                 VIDEO_DIR,
-                output_directory,
-                self.get_movie_directory(),
+                self.output_directory,
+                self.movie_directory,
             ))
             self.movie_file_path = os.path.join(
                 movie_dir,
                 add_extension_if_not_present(
-                    file_name, self.movie_file_extension
+                    self.file_name, self.movie_file_extension
                 )
             )
             self.partial_movie_directory = guarantee_existence(os.path.join(
                 movie_dir,
                 self.get_partial_movie_directory(),
-                file_name,
+                self.file_name,
             ))
-
-    def get_default_output_directory(self):
-        scene_module = self.scene.__class__.__module__
-        return scene_module.replace(".", os.path.sep)
-
-    def get_default_file_name(self):
-        return self.scene.__class__.__name__
-
-    def get_movie_directory(self):
-        pixel_height = self.scene.camera.pixel_height
-        frame_rate = self.scene.camera.frame_rate
-        return "{}p{}".format(
-            pixel_height, frame_rate
-        )
 
     def get_image_directory(self):
         return "images"
@@ -129,9 +117,9 @@ class SceneFileWriter(object):
         self.add_audio_segment(new_segment, time, **kwargs)
 
     # Writers
-    def begin_animation(self, n, allow_write=False):
+    def begin_animation(self, camera, n, allow_write=False):
         if self.write_to_movie and allow_write:
-            self.open_movie_pipe(n)
+            self.open_movie_pipe(camera, n)
 
     def end_animation(self, allow_write=False):
         if self.write_to_movie and allow_write:
@@ -146,22 +134,22 @@ class SceneFileWriter(object):
         image.save(file_path)
         self.print_file_ready_message(file_path)
 
-    def finish(self):
+    def finish(self, indices):
         if self.write_to_movie:
             if hasattr(self, "writing_process"):
                 self.writing_process.terminate()
-            self.combine_movie_files()
+            self.combine_movie_files(indices)
 
-    def open_movie_pipe(self, n):
+    def open_movie_pipe(self, camera, n):
         file_path = self.get_next_partial_movie_path(n)
         temp_file_path = file_path.replace(".", "_temp.")
 
         self.partial_movie_file_path = file_path
         self.temp_partial_movie_file_path = temp_file_path
 
-        fps = self.scene.camera.frame_rate
-        height = self.scene.camera.get_pixel_height()
-        width = self.scene.camera.get_pixel_width()
+        fps = camera.frame_rate
+        height = camera.get_pixel_height()
+        width = camera.get_pixel_width()
 
         command = [
             FFMPEG_BIN,
@@ -199,7 +187,7 @@ class SceneFileWriter(object):
             self.partial_movie_file_path,
         )
 
-    def combine_movie_files(self):
+    def combine_movie_files(self, indices):
         # Manim renders the scene as many smaller movie files
         # which are then concatenated to a larger one.  The reason
         # for this is that sometimes video-editing is made easier when
@@ -211,26 +199,21 @@ class SceneFileWriter(object):
             "remove_non_integer_files": True,
             "extension": self.movie_file_extension,
         }
-        if self.scene.start_at_animation_number is not None:
-            kwargs["min_index"] = self.scene.start_at_animation_number
-        if self.scene.end_at_animation_number is not None:
-            kwargs["max_index"] = self.scene.end_at_animation_number
-        else:
-            kwargs["remove_indices_greater_than"] = self.scene.num_plays - 1
+
         partial_movie_files = get_sorted_integer_files(
             self.partial_movie_directory,
-            **kwargs
-        )
+            min_index = indices[0],
+            max_index = indices[1])
+
         if len(partial_movie_files) == 0:
             print("No animations in this scene")
             return
 
         # Write a file partial_file_list.txt containing all
         # partial movie files
-        file_list = os.path.join(
-            self.partial_movie_directory,
-            "partial_movie_file_list.txt"
-        )
+        file_list = os.path.join(self.partial_movie_directory,
+                                 "partial_movie_file_list.txt")
+
         with open(file_list, 'w') as fp:
             for pf_path in partial_movie_files:
                 if os.name == 'nt':

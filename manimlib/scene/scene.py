@@ -33,6 +33,11 @@ class Scene(object):
     def __init__(self, **kwargs):
         digest_config(self, kwargs)
         self.camera = self.camera_class(**self.camera_config)
+
+        scene_module = self.__class__.__module__
+        self.file_writer_config["output_directory"] = scene_module.replace(".", os.path.sep)
+        self.file_writer_config["file_name"] = self.__class__.__name__
+
         self.file_writer = SceneFileWriter(
             self, **self.file_writer_config,
         )
@@ -332,7 +337,7 @@ class Scene(object):
         # Set up file writer
         self.update_skipping_status()
         allow_write = not self.skip_animations
-        self.file_writer.begin_animation(self.num_plays, allow_write)
+        self.file_writer.begin_animation(self.camera, self.num_plays, allow_write)
 
         if len(args) == 0:
             warnings.warn("Called Scene.play with no animations")
@@ -378,7 +383,7 @@ class Scene(object):
 
         self.update_skipping_status()
         allow_write = not self.skip_animations
-        self.file_writer.begin_animation(self.num_plays, allow_write)
+        self.file_writer.begin_animation(self.camera, self.num_plays, allow_write)
 
         dt = 1 / self.camera.frame_rate
         self.update_mobjects(dt=0)  # Any problems with this?

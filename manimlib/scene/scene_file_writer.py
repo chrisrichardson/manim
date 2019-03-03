@@ -8,12 +8,9 @@ from time import sleep
 import datetime
 
 from manimlib.constants import FFMPEG_BIN
-from manimlib.constants import STREAMING_IP
-from manimlib.constants import STREAMING_PORT
-from manimlib.constants import STREAMING_PROTOCOL
 from manimlib.constants import VIDEO_DIR
 from manimlib.utils.config_ops import digest_config
-from manimlib.utils.file_ops import guarantee_existance
+from manimlib.utils.file_ops import guarantee_existence
 from manimlib.utils.file_ops import add_extension_if_not_present
 from manimlib.utils.file_ops import get_sorted_integer_files
 from manimlib.utils.sounds import get_full_sound_file_path
@@ -27,11 +24,6 @@ class SceneFileWriter(object):
         "png_mode": "RGBA",
         "save_last_frame": False,
         "movie_file_extension": ".mp4",
-        "livestreaming": False,
-        "to_twitch": False,
-        "twitch_key": None,
-        # Previous output_file_name
-        # TODO, address this in extract_scene et. al.
         "file_name": None,
         "output_directory": None,
     }
@@ -48,7 +40,7 @@ class SceneFileWriter(object):
         output_directory = self.output_directory or self.get_default_output_directory()
         file_name = self.file_name or self.get_default_file_name()
         if self.save_last_frame:
-            image_dir = guarantee_existance(os.path.join(
+            image_dir = guarantee_existence(os.path.join(
                 VIDEO_DIR,
                 output_directory,
                 self.get_image_directory(),
@@ -58,7 +50,7 @@ class SceneFileWriter(object):
                 add_extension_if_not_present(file_name, ".png")
             )
         if self.write_to_movie:
-            movie_dir = guarantee_existance(os.path.join(
+            movie_dir = guarantee_existence(os.path.join(
                 VIDEO_DIR,
                 output_directory,
                 self.get_movie_directory(),
@@ -69,7 +61,7 @@ class SceneFileWriter(object):
                     file_name, self.movie_file_extension
                 )
             )
-            self.partial_movie_directory = guarantee_existance(os.path.join(
+            self.partial_movie_directory = guarantee_existence(os.path.join(
                 movie_dir,
                 self.get_partial_movie_directory(),
                 file_name,
@@ -156,15 +148,10 @@ class SceneFileWriter(object):
     def begin_animation(self, allow_write=False):
         if self.write_to_movie and allow_write:
             self.open_movie_pipe()
-        if self.livestreaming:
-            self.stream_lock = False
 
     def end_animation(self, allow_write=False):
         if self.write_to_movie and allow_write:
             self.close_movie_pipe()
-        if self.livestreaming:
-            self.stream_lock = True
-            thread.start_new_thread(self.idle_stream, ())
 
     def write_frame(self, frame):
         if self.write_to_movie:
@@ -232,22 +219,13 @@ class SceneFileWriter(object):
                 '-vcodec', 'libx264',
                 '-pix_fmt', 'yuv420p',
             ]
-        if self.livestreaming:
-            if self.to_twitch:
-                command += ['-f', 'flv']
-                command += ['rtmp://live.twitch.tv/app/' + self.twitch_key]
-            else:
-                command += ['-f', 'mpegts']
-                command += [STREAMING_PROTOCOL + '://' + STREAMING_IP + ':' + STREAMING_PORT]
-        else:
-            command += [temp_file_path]
+
+        command += [temp_file_path]
         self.writing_process = subprocess.Popen(command, stdin=subprocess.PIPE)
 
     def close_movie_pipe(self):
         self.writing_process.stdin.close()
         self.writing_process.wait()
-        if self.livestreaming:
-            return True
         shutil.move(
             self.temp_partial_movie_file_path,
             self.partial_movie_file_path,

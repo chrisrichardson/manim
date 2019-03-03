@@ -12,6 +12,7 @@ class ParametricFunction(VMobject):
         "dt": 1e-8,
         # TODO, be smar about figuring these out?
         "discontinuities": [],
+        "smoothing": True
     }
 
     def __init__(self, function, **kwargs):
@@ -52,7 +53,8 @@ class ParametricFunction(VMobject):
             if len(points) > 0:
                 self.start_new_path(points[0])
                 self.add_points_as_corners(points[1:])
-        self.make_smooth()
+        if self.smoothing:
+            self.make_smooth()
         return self
 
 
@@ -81,3 +83,27 @@ class FunctionGraph(ParametricFunction):
 
     def get_point_from_function(self, x):
         return self.parametric_function(x)
+
+
+class DiscreteFunction(VMobject):
+    CONFIG = {
+        "x_min": 0,
+        "x_max": 1,
+    }
+
+    def __init__(self, values, **kwargs):
+        self.values = values
+        VMobject.__init__(self, **kwargs)
+
+    def set_values(self, values):
+        self.values = values
+        self.generate_points()
+
+    def get_values(self):
+        return self.values
+
+    def generate_points(self):
+        self.clear_points()
+        self.start_new_path(self.values[0])
+        self.add_points_as_corners(self.values[1:])
+        return self

@@ -149,8 +149,17 @@ def main(config):
 
     for SceneClass in scene_classes_to_render:
         try:
-            # By invoking, this renders the full scene
+
             scene = SceneClass(**scene_kwargs)
+
+            try:
+                scene.construct()
+            except EndSceneEarlyException:
+                pass
+
+            scene.file_writer.finish()
+            scene.print_end_message()
+
             open_file_if_needed(scene.file_writer, **config)
             if config["sound"]:
                 play_finish_sound()

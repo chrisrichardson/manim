@@ -150,10 +150,8 @@ class MoveToTarget(Transform):
 
     def check_validity_of_input(self, mobject):
         if not hasattr(mobject, "target"):
-            raise Exception(
-                "MoveToTarget called on mobject"
-                "without attribute 'target'"
-            )
+            raise Exception("MoveToTarget called on mobject"
+                            "without attribute 'target'")
 
 
 class ApplyMethod(Transform):

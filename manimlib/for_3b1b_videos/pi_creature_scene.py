@@ -122,7 +122,8 @@ class PiCreatureScene(Scene):
         ]
         anims += added_anims
 
-        self.play(*anims, **kwargs)
+        print(anims)
+        self.play(*anims)
 
     def pi_creature_says(self, *args, **kwargs):
         self.introduce_bubble(

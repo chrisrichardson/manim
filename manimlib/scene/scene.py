@@ -38,34 +38,22 @@ class Scene(object):
         )
 
         self.mobjects = []
-        # TODO, remove need for foreground mobjects
-        self.foreground_mobjects = []
         self.num_plays = 0
         self.time = 0
-#        self.original_skipping_status = self.skip_animations
         if self.random_seed is not None:
             random.seed(self.random_seed)
             np.random.seed(self.random_seed)
 
         self.setup()
-        try:
-            self.construct()
-        except EndSceneEarlyException:
-            pass
-        self.tear_down()
-        self.file_writer.finish()
-        self.print_end_message()
 
     def setup(self):
         """
-        This is meant to be implement by any scenes which
+        This is meant to be implemented by any scenes which
         are comonly subclassed, and have some common setup
         involved before the construct method is called.
         """
         pass
 
-    def tear_down(self):
-        pass
 
     def construct(self):
         pass  # To be implemented in subclasses
@@ -110,12 +98,6 @@ class Scene(object):
     def set_camera_background(self, background):
         self.camera.set_background(background)
 
-    def reset_camera(self):
-        self.camera.reset()
-
-    def capture_mobjects_in_camera(self, mobjects, **kwargs):
-        self.camera.capture_mobjects(mobjects, **kwargs)
-
     def update_frame(
             self,
             mobjects=None,
@@ -126,17 +108,14 @@ class Scene(object):
         if self.skip_animations and not ignore_skipping:
             return
         if mobjects is None:
-            mobjects = list_update(
-                self.mobjects,
-                self.foreground_mobjects,
-            )
+            mobjects = self.mobjects
         if background is not None:
             self.set_camera_pixel_array(background)
         else:
-            self.reset_camera()
+            self.camera.reset()
 
         kwargs["include_submobjects"] = include_submobjects
-        self.capture_mobjects_in_camera(mobjects, **kwargs)
+        self.camera.capture_mobjects(mobjects, **kwargs)
 
     def freeze_background(self):
         self.update_frame()
@@ -186,7 +165,6 @@ class Scene(object):
         Mobjects will be displayed, from background to
         foreground in the order with which they are added.
         """
-        mobjects = [*mobjects, *self.foreground_mobjects]
         self.restructure_mobjects(to_remove=mobjects)
         self.mobjects += mobjects
         return self
@@ -204,8 +182,7 @@ class Scene(object):
         return self
 
     def remove(self, *mobjects):
-        for list_name in "mobjects", "foreground_mobjects":
-            self.restructure_mobjects(mobjects, list_name, False)
+        self.restructure_mobjects(mobjects, "mobjects", False)
         return self
 
     def restructure_mobjects(self, to_remove,
@@ -239,25 +216,6 @@ class Scene(object):
         add_safe_mobjects_from_list(mobjects, set(to_remove))
         return new_mobjects
 
-    # TODO, remove this, and calls to this
-    def add_foreground_mobjects(self, *mobjects):
-        self.foreground_mobjects = list_update(
-            self.foreground_mobjects,
-            mobjects
-        )
-        self.add(*mobjects)
-        return self
-
-    def add_foreground_mobject(self, mobject):
-        return self.add_foreground_mobjects(mobject)
-
-    def remove_foreground_mobjects(self, *to_remove):
-        self.restructure_mobjects(to_remove, "foreground_mobjects")
-        return self
-
-    def remove_foreground_mobject(self, mobject):
-        return self.remove_foreground_mobjects(mobject)
-
     def bring_to_front(self, *mobjects):
         self.add(*mobjects)
         return self
@@ -269,7 +227,6 @@ class Scene(object):
 
     def clear(self):
         self.mobjects = []
-        self.foreground_mobjects = []
         return self
 
     def get_mobjects(self):
@@ -289,7 +246,6 @@ class Scene(object):
             update_possibilities = [
                 mob in animation_mobjects,
                 len(mob.get_updaters()) > 0,
-                mob in self.foreground_mobjects
             ]
             if any(update_possibilities):
                 return mobjects[i:]
@@ -328,16 +284,6 @@ class Scene(object):
             if self.num_plays >= self.end_at_animation_number:
                 self.skip_animations = True
                 raise EndSceneEarlyException()
-
-    def handle_play_like_call(func):
-        def wrapper(self, *args, **kwargs):
-            self.update_skipping_status()
-            allow_write = not self.skip_animations
-            self.file_writer.begin_animation(allow_write)
-            func(self, *args, **kwargs)
-            self.file_writer.end_animation(allow_write)
-            self.num_plays += 1
-        return wrapper
 
     def begin_animations(self, animations):
         curr_mobjects = self.get_mobject_family_members()
@@ -382,18 +328,24 @@ class Scene(object):
         else:
             self.update_mobjects(0)
 
-    @handle_play_like_call
     def play(self, *args):
+        # Set up file writer
+        self.update_skipping_status()
+        allow_write = not self.skip_animations
+        self.file_writer.begin_animation(allow_write)
+
         if len(args) == 0:
             warnings.warn("Called Scene.play with no animations")
-            return
+        else:
+            if not all([isinstance(a, Animation) for a in args]):
+                raise TypeError("All objects must be of type Animation")
 
-        if not all([isinstance(a, Animation) for a in args]):
-            raise TypeError("All objects must be of type Animation")
+            self.begin_animations(args)
+            self.progress_through_animations(args)
+            self.finish_animations(args)
 
-        self.begin_animations(args)
-        self.progress_through_animations(args)
-        self.finish_animations(args)
+        self.file_writer.end_animation(allow_write)
+        self.num_plays += 1
 
     def idle_stream(self):
         self.file_writer.idle_stream()
@@ -425,8 +377,12 @@ class Scene(object):
             )
         return time_progression
 
-    @handle_play_like_call
     def wait(self, duration=DEFAULT_WAIT_TIME, stop_condition=None):
+
+        self.update_skipping_status()
+        allow_write = not self.skip_animations
+        self.file_writer.begin_animation(allow_write)
+
         dt = 1 / self.camera.frame_rate
         self.update_mobjects(dt=0)  # Any problems with this?
         if self.should_update_mobjects():
@@ -440,15 +396,14 @@ class Scene(object):
                 if stop_condition and stop_condition():
                     time_progression.close()
                     break
-        elif self.skip_animations:
-            # Do nothing
-            return self
-        else:
+        elif not self.skip_animations:
             self.update_frame()
             n_frames = int(duration / dt)
             frame = self.get_frame()
             self.add_frames(*[frame] * n_frames)
-        return self
+
+        self.file_writer.end_animation(allow_write)
+        self.num_plays += 1
 
     def wait_until(self, stop_condition, max_time=60):
         self.wait(max_time, stop_condition=stop_condition)

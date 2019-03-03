@@ -98,15 +98,37 @@ class Matrix(VMobject):
                 )
         return self
 
-    def add_brackets(self):
+    def add_tex_brackets(self):
         bracket_pair = TexMobject("\\big[ \\big]")
-        bracket_pair.scale(2)
+        bracket_pair.scale(4)
         bracket_pair.stretch_to_fit_height(self.get_height() + 0.5)
-        l_bracket, r_bracket = bracket_pair.split()
+        l_bracket, r_bracket = bracket_pair[0].split()
         l_bracket.next_to(self, LEFT)
         r_bracket.next_to(self, RIGHT)
         self.add(l_bracket, r_bracket)
         self.brackets = VGroup(l_bracket, r_bracket)
+        return self
+
+    def add_brackets(self):
+
+        h = self.get_height()*1.05
+        sw = h*1.2  # line width
+        t = 0.05*h  # spur length
+        lbrace = VMobject(stroke_width=sw)
+        lbrace.start_new_path([t, 0, 0])
+        lbrace.add_points_as_corners(np.array([[0, 0, 0],
+                                               [0, h, 0],
+                                               [t, h, 0]]))
+        rbrace = VMobject(stroke_width=sw)
+        rbrace.start_new_path([-t,0,0])
+        rbrace.add_points_as_corners(np.array([[0, 0, 0],
+                                               [0, h, 0],
+                                               [-t, h, 0]]))
+
+        lbrace.next_to(self, LEFT)
+        rbrace.next_to(self, RIGHT)
+        self.add(lbrace, rbrace)
+        self.brackets = VGroup(lbrace, rbrace)
         return self
 
     def get_columns(self):

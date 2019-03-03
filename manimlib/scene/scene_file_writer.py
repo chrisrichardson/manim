@@ -3,9 +3,6 @@ from pydub import AudioSegment
 import shutil
 import subprocess
 import os
-import _thread as thread
-from time import sleep
-import datetime
 
 from manimlib.constants import FFMPEG_BIN
 from manimlib.constants import VIDEO_DIR
@@ -24,25 +21,25 @@ class SceneFileWriter(object):
         "output_directory": None,
     }
 
-    def __init__(self, scene, **kwargs):
+    def __init__(self, camera, **kwargs):
         digest_config(self, kwargs)
 
-        pixel_height = scene.camera.pixel_height
-        frame_rate = scene.camera.frame_rate
-        self.movie_directory = "{}p{}".format(pixel_height, frame_rate)
+        pixel_height = camera.pixel_height
+        frame_rate = camera.frame_rate
 
-        self.stream_lock = False
-        self.init_output_directories()
+        movie_directory = "{}p{}".format(pixel_height, frame_rate)
+        self.init_output_directories(movie_directory)
+
         self.init_audio()
 
     # Output directories and files
-    def init_output_directories(self):
+    def init_output_directories(self, movie_directory):
 
         if self.write_to_movie:
             movie_dir = guarantee_existence(os.path.join(
                 VIDEO_DIR,
                 self.output_directory,
-                self.movie_directory,
+                movie_directory,
             ))
             self.movie_file_path = os.path.join(
                 movie_dir,

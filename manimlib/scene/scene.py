@@ -38,9 +38,7 @@ class Scene(object):
         self.file_writer_config["output_directory"] = scene_module.replace(".", os.path.sep)
         self.file_writer_config["file_name"] = self.__class__.__name__
 
-        self.file_writer = SceneFileWriter(
-            self, **self.file_writer_config,
-        )
+        self.file_writer = SceneFileWriter(self.camera, **self.file_writer_config)
 
         self.mobjects = []
         self.num_plays = 0

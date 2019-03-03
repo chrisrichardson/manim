@@ -630,6 +630,8 @@ class Polygon(VMobject):
 
     def __init__(self, *vertices, **kwargs):
         VMobject.__init__(self, **kwargs)
+
+        print('fill = ', self.color, self.fill_color, self.fill_opacity)
         self.set_points_as_corners(
             [*vertices, vertices[0]]
         )

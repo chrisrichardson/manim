@@ -2,6 +2,28 @@
 
 from manimlib import *
 
+class Moving(MovingCameraScene):
+
+    def construct(self):
+
+        b = Polygon([0,0,0],[1,0,0],[0,1,0], fill_color=RED, fill_opacity=1.0)
+
+
+        img = SVGMobject('fenics_logo_text.svg', unpack_groups=True)
+        self.play(FadeIn(img), FadeIn(b))
+
+        title = TextMobject("Test")
+        self.play(Write(title))
+        self.wait()
+        title.generate_target()
+        title.target.set_color(YELLOW)
+
+        self.camera.frame.generate_target()
+        self.camera.frame.target.scale(2.0)
+        self.play(MoveToTarget(self.camera.frame), MoveToTarget(title))
+        self.wait()
+
+
 class Mesh(VMobject):
     """ Make a 2D triangular mesh """
 

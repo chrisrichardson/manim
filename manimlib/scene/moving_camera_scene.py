@@ -13,7 +13,7 @@ class MovingCameraScene(Scene):
         assert(isinstance(self.camera, MovingCamera))
         self.camera_frame = self.camera.frame
         # Hmm, this currently relies on the fact that MovingCamera
-        # willd default to a full-sized frame.  Is that okay?
+        # will default to a full-sized frame.  Is that okay?
         return self
 
     def get_moving_mobjects(self, *animations):

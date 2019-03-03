@@ -79,20 +79,9 @@ class MovingCamera(Camera):
     def cache_cairo_context(self, pixel_array, ctx):
         pass
 
-    # def reset_frame_center(self):
-    #     self.frame_center = self.frame.get_center()
-
-    # def realign_frame_shape(self):
-    #     height, width = self.frame_shape
-    #     if self.fixed_dimension == 0:
-    #         self.frame_shape = (height, self.frame.get_width())
-    #     else:
-    #         self.frame_shape = (self.frame.get_height(), width)
-    #     self.resize_frame_shape(fixed_dimension=self.fixed_dimension)
-
     def get_mobjects_indicating_movement(self):
         """
-        Returns all mobjets whose movement implies that the camera
+        Returns all mobjects whose movement implies that the camera
         should think of all other mobjects on the screen as moving
         """
         return [self.frame]

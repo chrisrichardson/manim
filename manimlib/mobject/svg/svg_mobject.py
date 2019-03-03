@@ -7,7 +7,7 @@ from xml.dom import minidom
 
 from manimlib.constants import *
 from manimlib.mobject.geometry import Circle
-from manimlib.mobject.geometry import Rectangle
+from manimlib.mobject.geometry import Rectangle, Polygon
 from manimlib.mobject.geometry import RoundedRectangle
 from manimlib.mobject.types.vectorized_mobject import VGroup
 from manimlib.mobject.types.vectorized_mobject import VMobject
@@ -138,10 +138,17 @@ class SVGMobject(VMobject):
     def polygon_to_mobject(self, polygon_element):
         # TODO, This seems hacky...
         path_string = polygon_element.getAttribute("points")
-        for digit in string.digits:
-            path_string = path_string.replace(" " + digit, " L" + digit)
-        path_string = "M" + path_string
-        return self.path_string_to_mobject(path_string)
+        fill_color = polygon_element.getAttribute("fill")
+
+        points = np.fromstring(path_string.replace(",", " "), sep=' ', dtype=float)
+        points = points.reshape([-1,2])
+        points[:, 1] *= -1.0
+        z = np.zeros((points.shape[0], 1))
+        points = np.hstack([points, z])
+
+        p = Polygon(*points, fill_color=fill_color, fill_opacity=1.0)
+        return p
+
 
     # <circle class="st1" cx="143.8" cy="268" r="22.6"/>
 

@@ -33,11 +33,6 @@ def parse_cli():
             help="Render the scene as a movie file",
         ),
         parser.add_argument(
-            "-s", "--save_last_frame",
-            action="store_true",
-            help="Save the last frame",
-        ),
-        parser.add_argument(
             "-l", "--low_quality",
             action="store_true",
             help="Render at a low quality (for faster rendering)",
@@ -158,8 +153,7 @@ def get_configuration(args):
     module = get_module(args.file)
     file_writer_config = {
         # By default, write to file
-        "write_to_movie": args.write_to_movie or not args.save_last_frame,
-        "save_last_frame": args.save_last_frame,
+        "write_to_movie": True,
         "save_pngs": args.save_pngs,
         # If -t is passed in (for transparent), this will be RGBA
         "png_mode": "RGBA" if args.transparent else "RGB",
@@ -197,7 +191,6 @@ def get_configuration(args):
             config["start_at_animation_number"] = int(stan)
 
     config["skip_animations"] = any([
-        file_writer_config["save_last_frame"],
         config["start_at_animation_number"],
     ])
     return config

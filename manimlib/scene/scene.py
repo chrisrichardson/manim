@@ -332,7 +332,7 @@ class Scene(object):
         # Set up file writer
         self.update_skipping_status()
         allow_write = not self.skip_animations
-        self.file_writer.begin_animation(allow_write)
+        self.file_writer.begin_animation(self.num_plays, allow_write)
 
         if len(args) == 0:
             warnings.warn("Called Scene.play with no animations")
@@ -346,9 +346,6 @@ class Scene(object):
 
         self.file_writer.end_animation(allow_write)
         self.num_plays += 1
-
-    def idle_stream(self):
-        self.file_writer.idle_stream()
 
     def clean_up_animations(self, *animations):
         for animation in animations:
@@ -381,7 +378,7 @@ class Scene(object):
 
         self.update_skipping_status()
         allow_write = not self.skip_animations
-        self.file_writer.begin_animation(allow_write)
+        self.file_writer.begin_animation(self.num_plays, allow_write)
 
         dt = 1 / self.camera.frame_rate
         self.update_mobjects(dt=0)  # Any problems with this?

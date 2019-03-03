@@ -25,8 +25,6 @@ def open_file_if_needed(file_writer, **config):
         current_os = platform.system()
         file_paths = []
 
-        if config["file_writer_config"]["save_last_frame"]:
-            file_paths.append(file_writer.get_image_file_path())
         if config["file_writer_config"]["write_to_movie"]:
             file_paths.append(file_writer.get_movie_file_path())
 

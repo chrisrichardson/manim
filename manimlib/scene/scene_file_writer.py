@@ -19,10 +19,6 @@ from manimlib.utils.sounds import get_full_sound_file_path
 class SceneFileWriter(object):
     CONFIG = {
         "write_to_movie": False,
-        # TODO, save_pngs is doing nothing
-        "save_pngs": False,
-        "png_mode": "RGBA",
-        "save_last_frame": False,
         "movie_file_extension": ".mp4",
         "file_name": None,
         "output_directory": None,
@@ -39,16 +35,7 @@ class SceneFileWriter(object):
     def init_output_directories(self):
         output_directory = self.output_directory or self.get_default_output_directory()
         file_name = self.file_name or self.get_default_file_name()
-        if self.save_last_frame:
-            image_dir = guarantee_existence(os.path.join(
-                VIDEO_DIR,
-                output_directory,
-                self.get_image_directory(),
-            ))
-            self.image_file_path = os.path.join(
-                image_dir,
-                add_extension_if_not_present(file_name, ".png")
-            )
+
         if self.write_to_movie:
             movie_dir = guarantee_existence(os.path.join(
                 VIDEO_DIR,
@@ -91,14 +78,11 @@ class SceneFileWriter(object):
     def get_image_file_path(self):
         return self.image_file_path
 
-    def get_next_partial_movie_path(self):
+    def get_next_partial_movie_path(self, n):
         result = os.path.join(
             self.partial_movie_directory,
-            "{:05}{}".format(
-                self.scene.num_plays,
-                self.movie_file_extension,
-            )
-        )
+            "{:05}{}".format(n, self.movie_file_extension))
+
         return result
 
     def get_movie_file_path(self):
@@ -145,9 +129,9 @@ class SceneFileWriter(object):
         self.add_audio_segment(new_segment, time, **kwargs)
 
     # Writers
-    def begin_animation(self, allow_write=False):
+    def begin_animation(self, n, allow_write=False):
         if self.write_to_movie and allow_write:
-            self.open_movie_pipe()
+            self.open_movie_pipe(n)
 
     def end_animation(self, allow_write=False):
         if self.write_to_movie and allow_write:
@@ -162,30 +146,14 @@ class SceneFileWriter(object):
         image.save(file_path)
         self.print_file_ready_message(file_path)
 
-    def idle_stream(self):
-        while self.stream_lock:
-            a = datetime.datetime.now()
-            self.update_frame()
-            n_frames = 1
-            frame = self.get_frame()
-            self.add_frames(*[frame] * n_frames)
-            b = datetime.datetime.now()
-            time_diff = (b - a).total_seconds()
-            frame_duration = 1 / self.scene.camera.frame_rate
-            if time_diff < frame_duration:
-                sleep(frame_duration - time_diff)
-
     def finish(self):
         if self.write_to_movie:
             if hasattr(self, "writing_process"):
                 self.writing_process.terminate()
             self.combine_movie_files()
-        if self.save_last_frame:
-            self.scene.update_frame(ignore_skipping=True)
-            self.save_image(self.scene.get_image())
 
-    def open_movie_pipe(self):
-        file_path = self.get_next_partial_movie_path()
+    def open_movie_pipe(self, n):
+        file_path = self.get_next_partial_movie_path(n)
         temp_file_path = file_path.replace(".", "_temp.")
 
         self.partial_movie_file_path = file_path

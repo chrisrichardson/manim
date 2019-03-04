@@ -2,14 +2,79 @@
 
 from manimlib import *
 
+class SomeEquations(Scene):
+
+    def construct(self):
+
+        poisson = TexMobject(r"\nabla^2 u = \rho")
+        poisson_text = TextMobject("Poisson's Equation")
+
+        VGroup(poisson, poisson_text).arrange(DOWN)
+        self.play(Write(poisson), FadeInFrom(poisson_text, DOWN))
+        self.wait(5)
+
+        maxwell = VGroup(TexMobject(r"\nabla\times B = \mu_0 (J + \epsilon_0 \dot E)"),
+                         TexMobject(r"\nabla\cdot B = 0"),
+                         TexMobject(r"\nabla\times E = -\dot B"),
+                         TexMobject(r"\nabla\cdot E = {\rho\over\epsilon_0}")
+        ).arrange(DOWN)
+        maxwell_text = TextMobject("Maxwell's Equations")
+        VGroup(maxwell, maxwell_text).arrange(DOWN)
+
+        self.play(ReplacementTransform(poisson, maxwell),
+                  ReplacementTransform(poisson_text, maxwell_text))
+
+        self.wait()
+
+        lin_eq = VGroup(TexMobject(r"\epsilon = {1\over 2}(\nabla u + \nabla u^T)"),
+                         TexMobject(r"\sigma = C_{ijkl} \epsilon"),
+                         TexMobject(r"\nabla \cdot \sigma = f")
+        ).arrange(DOWN)
+        lin_text = TextMobject("Linear Elasticity")
+        VGroup(lin_eq, lin_text).arrange(DOWN)
+
+        self.play(ReplacementTransform(maxwell, lin_eq),
+                  ReplacementTransform(maxwell_text, lin_text))
+
+        self.wait(5)
+
+        heat_eq = TexMobject(r"{\partial T \over \partial t} = \nabla\cdot k\nabla T")
+        heat_text = TextMobject("Heat Equation")
+        VGroup(heat_eq, heat_text).arrange(DOWN)
+
+        self.play(ReplacementTransform(lin_eq, heat_eq),
+                  ReplacementTransform(lin_text, heat_text))
+
+        self.wait()
+
+        ns_eq = VGroup(TexMobject(r"\rho\left({\partial u\over\partial t} + u\cdot\nabla u\right) - \mu\nabla^2 u + \nabla p = f"),
+                       TexMobject(r"\nabla \cdot u = 0")).arrange(DOWN)
+        ns_text = TextMobject("Incompressible Navier-Stokes")
+        VGroup(ns_eq, ns_text).arrange(DOWN)
+
+        self.play(ReplacementTransform(heat_eq, ns_eq),
+                  ReplacementTransform(heat_text, ns_text))
+
+        self.wait(5)
+
+
+
 class Moving(MovingCameraScene):
 
     def construct(self):
 
-        img = SVGMobject('fenics_logo_text.svg')
-        print(img.submobjects[-2].get_fill_color())
+        arc3 = CurvedArrow(np.array([0, 0, 0]),
+                           np.array([1, 1, 0]))
+        arc4 = CurvedDoubleArrow(np.array([0, 0, 0]),
+                                 np.array([-1, -1, 0]))
 
-        self.play(FadeIn(img))
+#        img = SVGMobject('fenics_logo_text.svg')
+        img = SVGMobject('m2.svg', stroke_width=0)
+
+        self.play(Write(img))
+        return
+
+        self.play(FadeIn(img), Write(arc3), Write(arc4))
 
         self.camera.frame.generate_target()
         self.camera.frame.target.scale(2.0)
@@ -93,7 +158,6 @@ class Help(ThreeDScene):
         bm.shift([0,0,0.2])
 
         verts = [mesh.points[j] for j in mesh.cells['triangle'][10]]
-        print(verts)
         q = Polygon(*verts, color=GREEN, fill_color=YELLOW, fill_opacity=1.0)
         q.shift([0,0,0.2])
         q.generate_target()

@@ -34,7 +34,7 @@ class SVGMobject(VMobject):
         # Must be filled in in a subclass, or when called
         "file_name": None,
         "unpack_groups": True,  # if False, creates a hierarchy of VGroups
-        "stroke_width": 0.5,
+        "stroke_width": 0,
         "fill_opacity": 1.0,
         "fill_family": False # allows colours to be passed through
     }
@@ -87,9 +87,7 @@ class SVGMobject(VMobject):
                 for child in element.childNodes
             ])
         elif element.tagName == 'path':
-            result.append(self.path_string_to_mobject(
-                element.getAttribute('d')
-            ))
+            result.append(self.path_to_mobject(element))
         elif element.tagName == 'use':
             result += self.use_to_mobjects(element)
         elif element.tagName == 'rect':
@@ -111,13 +109,11 @@ class SVGMobject(VMobject):
 
         return result
 
-    def g_to_mobjects(self, g_element):
-        mob = VGroup(*self.get_mobjects_from(g_element))
-        self.handle_transforms(g_element, mob)
-        return mob.submobjects
-
-    def path_string_to_mobject(self, path_string):
-        return VMobjectFromSVGPathstring(path_string, fill_color=WHITE,
+    def path_to_mobject(self, element):
+        path_string = element.getAttribute('d')
+        fill_color = element.getAttribute('fill')
+        return VMobjectFromSVGPathstring(path_string,
+                                         fill_color=fill_color,
                                          fill_opacity=1.0)
 
     def use_to_mobjects(self, use_element):
@@ -131,11 +127,7 @@ class SVGMobject(VMobject):
         )
 
     def attribute_to_float(self, attr):
-        stripped_attr = "".join([
-            char for char in attr
-            if char in string.digits + "." + "-"
-        ])
-        return float(stripped_attr)
+        return float(attr)
 
     def polygon_to_mobject(self, polygon_element):
 
@@ -343,7 +335,6 @@ class VMobjectFromSVGPathstring(VMobject):
             re.split(pattern, self.path_string)[1:]
         ))
         # Which mobject should new points be added to
-        self = self
         for command, coord_string in pairs:
             self.handle_command(command, coord_string)
         # people treat y-coordinate differently
@@ -401,7 +392,7 @@ class VMobjectFromSVGPathstring(VMobject):
             # TODO, this is a suboptimal approximation
             new_points = np.append([new_points[0]], new_points, axis=0)
         elif command == "A":  # elliptical Arc
-            raise Exception("Not implemented")
+            raise RuntimeError("Not implemented")
         elif command == "Z":  # closepath
             return
 

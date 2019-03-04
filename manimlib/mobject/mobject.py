@@ -4,11 +4,16 @@ import itertools as it
 import operator as op
 import os
 import random
+import sys
 
 from colour import Color
 import numpy as np
 
-from manimlib.constants import *
+from manimlib.constants import WHITE, BLACK, YELLOW_C
+from manimlib.constants import VIDEO_DIR, MED_SMALL_BUFF, \
+    DEFAULT_MOBJECT_TO_EDGE_BUFFER, DEFAULT_MOBJECT_TO_MOBJECT_BUFFER
+from manimlib.constants import FRAME_X_RADIUS, FRAME_Y_RADIUS, TAU
+from manimlib.constants import ORIGIN, LEFT, RIGHT, UP, DOWN, IN, OUT
 from manimlib.utils.color import color_gradient
 from manimlib.utils.config_ops import digest_config
 from manimlib.utils.color import interpolate_color
@@ -82,7 +87,8 @@ class Mobject(object):
         Ensures all attributes which are mobjects are included
         in the submobjects list.
         """
-        mobject_attrs = [x for x in list(self.__dict__.values()) if isinstance(x, Mobject)]
+        mobject_attrs = [x for x in list(self.__dict__.values())
+                         if isinstance(x, Mobject)]
         self.submobjects = list_update(self.submobjects, mobject_attrs)
         return self
 
@@ -121,7 +127,8 @@ class Mobject(object):
         copy_mobject.updaters = list(self.updaters)
         family = self.get_family()
         for attr, value in list(self.__dict__.items()):
-            if isinstance(value, Mobject) and value in family and value is not self:
+            if (isinstance(value, Mobject)
+                    and value in family and value is not self):
                 setattr(copy_mobject, attr, value.copy())
             if isinstance(value, np.ndarray):
                 setattr(copy_mobject, attr, np.array(value))
@@ -333,7 +340,9 @@ class Mobject(object):
     # Note, much of these are now redundant with default behavior of
     # above methods
 
-    def apply_points_function_about_point(self, func, about_point=None, about_edge=None):
+    def apply_points_function_about_point(self,
+                                          func, about_point=None,
+                                          about_edge=None):
         if about_point is None:
             if about_edge is None:
                 about_edge = ORIGIN
@@ -378,7 +387,8 @@ class Mobject(object):
         self.shift(shift_val)
         return self
 
-    def to_corner(self, corner=LEFT + DOWN, buff=DEFAULT_MOBJECT_TO_EDGE_BUFFER):
+    def to_corner(self, corner=LEFT + DOWN,
+                  buff=DEFAULT_MOBJECT_TO_EDGE_BUFFER):
         return self.align_on_border(corner, buff)
 
     def to_edge(self, edge=LEFT, buff=DEFAULT_MOBJECT_TO_EDGE_BUFFER):
@@ -588,7 +598,8 @@ class Mobject(object):
         self.set_submobject_colors_by_gradient(*colors)
         return self
 
-    def set_colors_by_radial_gradient(self, center=None, radius=1, inner_color=WHITE, outer_color=BLACK):
+    def set_colors_by_radial_gradient(self, center=None, radius=1,
+                                      inner_color=WHITE, outer_color=BLACK):
         self.set_submobject_colors_by_radial_gradient(
             center, radius, inner_color, outer_color)
         return self
@@ -606,7 +617,9 @@ class Mobject(object):
             mob.set_color(color, family=False)
         return self
 
-    def set_submobject_colors_by_radial_gradient(self, center=None, radius=1, inner_color=WHITE, outer_color=BLACK):
+    def set_submobject_colors_by_radial_gradient(self, center=None,
+                                                 radius=1, inner_color=WHITE,
+                                                 outer_color=BLACK):
         if center is None:
             center = self.get_center()
 
@@ -943,8 +956,13 @@ class Mobject(object):
         return self
 
     def sort(self, point_to_num_func=lambda p: p[0], submob_func=None):
+
+        def f(m):
+            return point_to_num_func(m.get_center())
+
         if submob_func is None:
-            submob_func = lambda m: point_to_num_func(m.get_center())
+            submob_func = f
+
         self.submobjects.sort(key=submob_func)
         return self
 

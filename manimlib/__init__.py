@@ -13,6 +13,8 @@ Note: One should NOT import from this file for main library code, it is meant on
 as a convenience for scripts creating scenes for videos.
 """
 
+# flake8: noqa
+
 
 from manimlib.constants import *
 

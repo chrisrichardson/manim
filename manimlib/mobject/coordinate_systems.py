@@ -1,7 +1,11 @@
 import numpy as np
 import numbers
 
-from manimlib.constants import *
+from manimlib.constants import WHITE, LIGHT_GREY, BLUE_D, BLUE
+from manimlib.constants import SMALL_BUFF, MED_SMALL_BUFF
+from manimlib.constants import FRAME_X_RADIUS, FRAME_Y_RADIUS, DEGREES
+from manimlib.constants import ORIGIN, LEFT, RIGHT, UP, DOWN, OUT, DR, DL
+
 from manimlib.mobject.functions import ParametricFunction
 from manimlib.mobject.geometry import Arrow
 from manimlib.mobject.geometry import Line
@@ -13,7 +17,8 @@ from manimlib.utils.config_ops import merge_dicts_recursively
 from manimlib.utils.simple_functions import binary_search
 from manimlib.utils.space_ops import angle_of_vector
 
-# TODO: There should be much more code reuse between Axes, NumberPlane and GraphScene
+# TODO: There should be much more code reuse
+# between Axes, NumberPlane and GraphScene
 
 
 class CoordinateSystem():
@@ -319,39 +324,29 @@ class NumberPlane(Axes):
         return self.axes
 
     def get_x_axis_label(self, label_tex, edge=RIGHT, direction=DL, **kwargs):
-        return self.get_axis_label(
-            label_tex, self.get_x_axis(),
-            edge, direction, **kwargs
-        )
+        return self.get_axis_label(label_tex, self.get_x_axis(),
+                                   edge, direction, **kwargs)
 
     def get_y_axis_label(self, label_tex, edge=UP, direction=DR, **kwargs):
-        return self.get_axis_label(
-            label_tex, self.get_y_axis(),
-            edge, direction, **kwargs
-        )
+        return self.get_axis_label(label_tex, self.get_y_axis(),
+                                   edge, direction, **kwargs)
 
-    def get_axis_label(self, label_tex, axis, edge, direction, buff=MED_SMALL_BUFF):
+    def get_axis_label(self, label_tex, axis, edge,
+                       direction, buff=MED_SMALL_BUFF):
         label = TexMobject(label_tex)
-        label.next_to(
-            axis.get_edge_center(edge), direction,
-            buff=buff
-        )
+        label.next_to(axis.get_edge_center(edge), direction, buff=buff)
         return label
 
     def get_axis_labels(self, x_label_tex="x", y_label_tex="y"):
-        self.axis_labels = VGroup(
-            self.get_x_axis_label(x_label_tex),
-            self.get_y_axis_label(y_label_tex),
-        )
+        self.axis_labels = VGroup(self.get_x_axis_label(x_label_tex),
+                                  self.get_y_axis_label(y_label_tex))
         return self.axis_labels
 
     def get_vector(self, coords, **kwargs):
         kwargs["buff"] = 0
-        return Arrow(
-            self.coords_to_point(0, 0),
-            self.coords_to_point(*coords),
-            **kwargs
-        )
+        return Arrow(self.coords_to_point(0, 0),
+                     self.coords_to_point(*coords),
+                     **kwargs)
 
     def prepare_for_nonlinear_transform(self, num_inserted_curves=50):
         for mob in self.family_members_with_points():

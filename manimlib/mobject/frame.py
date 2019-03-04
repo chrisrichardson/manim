@@ -1,4 +1,4 @@
-from manimlib.constants import *
+from manimlib.constants import FRAME_HEIGHT, BLACK
 from manimlib.mobject.geometry import Rectangle
 from manimlib.utils.config_ops import digest_config
 

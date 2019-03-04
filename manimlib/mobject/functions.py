@@ -1,4 +1,5 @@
-from manimlib.constants import *
+from manimlib.constants import YELLOW, FRAME_X_RADIUS
+import numpy as np
 from manimlib.mobject.types.vectorized_mobject import VMobject
 from manimlib.utils.config_ops import digest_config
 

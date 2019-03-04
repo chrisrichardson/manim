@@ -6,7 +6,7 @@ env_MEDIA_DIR = os.getenv("MEDIA_DIR")
 if env_MEDIA_DIR:
     MEDIA_DIR = env_MEDIA_DIR
 elif os.path.isfile("media_dir.txt"):
-    with open("media_dir.txt", 'rU') as media_file:
+    with open("media_dir.txt", 'r', newline=None) as media_file:
         MEDIA_DIR = media_file.readline().strip()
 else:
     MEDIA_DIR = os.path.join(
@@ -68,7 +68,9 @@ TEMPLATE_TEXT_BODY = r"""
 """ + TEX_TEXT_TO_REPLACE + r"\end{document}"
 
 TEMPLATE_TEX_BODY = TEMPLATE_TEXT_BODY.replace(TEX_TEXT_TO_REPLACE,
-        "\\begin{align*}\n" + TEX_TEXT_TO_REPLACE + "\n\\end{align*}")
+                                               "\\begin{align*}\n"
+                                               + TEX_TEXT_TO_REPLACE
+                                               + "\n\\end{align*}")
 
 HELP_MESSAGE = """
    Usage:
@@ -94,7 +96,8 @@ CHOOSE_NUMBER_MESSAGE = """
 Choose number corresponding to desired scene/arguments.
 (Use comma separated list for multiple entries)
 Choice(s): """
-INVALID_NUMBER_MESSAGE = "Fine then, if you don't want to give a valid number I'll just quit"
+INVALID_NUMBER_MESSAGE = """
+Fine then, if you don't want to give a valid number I'll just quit"""
 
 NO_SCENE_MESSAGE = """
    There are no scenes inside that module
@@ -120,8 +123,8 @@ MEDIUM_QUALITY_CAMERA_CONFIG = {
 }
 
 LOW_QUALITY_CAMERA_CONFIG = {
-    "pixel_height": 480,
-    "pixel_width": 854,
+    "pixel_height": 240, # 480,
+    "pixel_width": 426, # 854,
     "frame_rate": 15,
 }
 

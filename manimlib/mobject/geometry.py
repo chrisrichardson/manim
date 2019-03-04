@@ -36,14 +36,14 @@ class TipableVMobject(VMobject):
         }
     }
     """
-    Meant simply for shard functionality between
+    Meant simply for shared functionality between
     Arc and Line
     """
 
     def add_tip(self, tip_length=None, at_start=False):
         tip = self.create_tip(tip_length, at_start)
         self.reset_endpoints_based_on_tip(tip, at_start)
-        self.asign_tip_attr(tip, at_start)
+        self.assign_tip_attr(tip, at_start)
         self.add(tip)
         return self
 
@@ -95,7 +95,7 @@ class TipableVMobject(VMobject):
             )
         return self
 
-    def asign_tip_attr(self, tip, at_start):
+    def assign_tip_attr(self, tip, at_start):
         if at_start:
             self.start_tip = tip
         else:
@@ -174,6 +174,10 @@ class Arc(TipableVMobject):
         self.set_pre_positioned_points()
         self.scale(self.radius, about_point=ORIGIN)
         self.shift(self.arc_center)
+
+    def get_length(self):
+        return abs(self.radius * 2 * PI
+                   * (self.angle - self.start_angle))
 
     def set_pre_positioned_points(self):
         anchors = np.array([
@@ -630,8 +634,6 @@ class Polygon(VMobject):
 
     def __init__(self, *vertices, **kwargs):
         VMobject.__init__(self, **kwargs)
-
-        print('fill = ', self.color, self.fill_color, self.fill_opacity)
         self.set_points_as_corners(
             [*vertices, vertices[0]]
         )

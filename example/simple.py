@@ -9,7 +9,7 @@ class Moving(MovingCameraScene):
         b = Polygon([0,0,0],[1,0,0],[0,1,0], fill_color=RED, fill_opacity=1.0)
 
 
-        img = SVGMobject('fenics_logo_text.svg', unpack_groups=True)
+        img = SVGMobject('fenics_logo_text.svg', unpack_groups=False)
         self.play(FadeIn(img), FadeIn(b))
 
         title = TextMobject("Test")

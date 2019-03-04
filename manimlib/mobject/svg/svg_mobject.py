@@ -34,9 +34,9 @@ class SVGMobject(VMobject):
         # Must be filled in in a subclass, or when called
         "file_name": None,
         "unpack_groups": True,  # if False, creates a hierarchy of VGroups
-        "stroke_width": 0,
+        "stroke_width": 0.5,
         "fill_opacity": 1.0,
-        # "fill_color" : LIGHT_GREY,
+        "fill_family": False # allows colours to be passed through
     }
 
     def __init__(self, file_name=None, **kwargs):
@@ -103,6 +103,7 @@ class SVGMobject(VMobject):
         else:
             pass  # TODO
             # warnings.warn("Unknown element type: " + element.tagName)
+
         result = [m for m in result if m is not None]
         self.handle_transforms(element, VGroup(*result))
         if len(result) > 1 and not self.unpack_groups:
@@ -116,7 +117,8 @@ class SVGMobject(VMobject):
         return mob.submobjects
 
     def path_string_to_mobject(self, path_string):
-        return VMobjectFromSVGPathstring(path_string)
+        return VMobjectFromSVGPathstring(path_string, fill_color=WHITE,
+                                         fill_opacity=1.0)
 
     def use_to_mobjects(self, use_element):
         # Remove initial "#" character
@@ -136,11 +138,16 @@ class SVGMobject(VMobject):
         return float(stripped_attr)
 
     def polygon_to_mobject(self, polygon_element):
-        # TODO, This seems hacky...
+
         path_string = polygon_element.getAttribute("points")
         fill_color = polygon_element.getAttribute("fill")
 
-        points = np.fromstring(path_string.replace(",", " "), sep=' ', dtype=float)
+        # Black is white
+        if fill_color in ["#000", "#000000"]:
+            fill_color = WHITE
+
+        points = np.fromstring(path_string.replace(",", " "),
+                               sep=' ', dtype=float)
         points = points.reshape([-1,2])
         points[:, 1] *= -1.0
         z = np.zeros((points.shape[0], 1))
@@ -148,7 +155,6 @@ class SVGMobject(VMobject):
 
         p = Polygon(*points, fill_color=fill_color, fill_opacity=1.0)
         return p
-
 
     # <circle class="st1" cx="143.8" cy="268" r="22.6"/>
 
@@ -161,7 +167,8 @@ class SVGMobject(VMobject):
             else 0.0
             for key in ("cx", "cy", "r")
         ]
-        return Circle(radius=r).shift(x * RIGHT + y * DOWN)
+        return Circle(radius=r, fill_opacity=1.0,
+                      fill_color=WHITE).shift(x * RIGHT + y * DOWN)
 
     def ellipse_to_mobject(self, circle_element):
         x, y, rx, ry = [

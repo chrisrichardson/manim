@@ -33,6 +33,7 @@ class SingleStringTexMobject(SVGMobject):
         "height": None,
         "organize_left_to_right": False,
         "alignment": "",
+        "fill_family": True
     }
 
     def __init__(self, tex_string, **kwargs):

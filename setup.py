@@ -5,8 +5,8 @@ except ImportError:
 
 import sys
 
-if sys.version_info < (3, 7):
-    print("Python 3.7 or higher required, please upgrade.")
+if sys.version_info < (3, 6):
+    print("Python 3.6 or higher required, please upgrade.")
     sys.exit(1)
 
 version = "1.0"

@@ -32,6 +32,7 @@ class VMobject(Mobject):
     CONFIG = {
         "fill_color": None,
         "fill_opacity": 0.0,
+        "fill_family": True,
         "stroke_color": None,
         "stroke_opacity": 1.0,
         "stroke_width": DEFAULT_STROKE_WIDTH,
@@ -69,6 +70,7 @@ class VMobject(Mobject):
         self.set_fill(
             color=self.fill_color or self.color,
             opacity=self.fill_opacity,
+            family=self.fill_family
         )
         self.set_stroke(
             color=self.stroke_color or self.color,

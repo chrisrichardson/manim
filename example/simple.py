@@ -68,8 +68,8 @@ class Moving(MovingCameraScene):
         arc4 = CurvedDoubleArrow(np.array([0, 0, 0]),
                                  np.array([-1, -1, 0]))
 
-#        img = SVGMobject('fenics_logo_text.svg')
-        img = SVGMobject('m2.svg', stroke_width=0)
+        img = SVGMobject('fenics_logo_text.svg')
+#        img = SVGMobject('m2.svg', stroke_width=0)
 
         self.play(Write(img))
         return

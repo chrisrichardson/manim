@@ -111,7 +111,7 @@ class SVGMobject(VMobject):
 
     def path_to_mobject(self, element):
         path_string = element.getAttribute('d')
-        fill_color = element.getAttribute('fill')
+        fill_color = element.getAttribute('style')[5:]
         return VMobjectFromSVGPathstring(path_string,
                                          fill_color=fill_color,
                                          fill_opacity=1.0)
@@ -335,78 +335,105 @@ class VMobjectFromSVGPathstring(VMobject):
             re.split(pattern, self.path_string)[1:]
         ))
         # Which mobject should new points be added to
+        cursor = np.zeros(3)
         for command, coord_string in pairs:
-            self.handle_command(command, coord_string)
+            cursor = self.handle_command(command, coord_string, cursor)
         # people treat y-coordinate differently
         self.rotate(np.pi, RIGHT, about_point=ORIGIN)
 
-    def handle_command(self, command, coord_string):
+    def handle_command(self, command, coord_string, cursor):
+
         isLower = command.islower()
         command = command.upper()
-        # new_points are the points that will be added to the curr_points
-        # list. This variable may get modified in the conditionals below.
-        points = self.points
-        new_points = self.string_to_points(coord_string)
-
-        if isLower and len(points) > 0:
-            new_points += points[-1]
 
         if command == "M":  # moveto
+            numbers = string_to_numbers(coord_string)
+            new_points = np.zeros((len(numbers) // 2, 3))
+            new_points[:, :2] = np.array(numbers).reshape((-1, 2))
+            if isLower:
+                new_points[0] += cursor
+                for i in range(1, len(new_points)):
+                    new_points[i] += new_points[i - 1]
+            cursor = new_points[-1]
+
             self.start_new_path(new_points[0])
             if len(new_points) <= 1:
-                return
+                return cursor
 
-            # Draw relative line-to values.
-            points = self.points
-            new_points = new_points[1:]
-            command = "L"
+            for lp in new_points[1:]:
+                self.add_line_to(lp)
 
-            # Treat everything as relative line-to until empty
-            for p in new_points:
-                # Treat as relative
-                p[0] += self.points[-1, 0]
-                p[1] += self.points[-1, 1]
-                self.add_line_to(p)
-            return
+            return cursor
 
         elif command in ["L", "H", "V"]:  # lineto
             if command == "H":
-                new_points[0, 1] = points[-1, 1]
-            elif command == "V":
+                numbers = string_to_numbers(coord_string)
+                new_points = np.zeros((len(numbers), 3))
+                new_points[:, 0] = np.array(numbers)
+                new_points[:, 1] = cursor[1]
                 if isLower:
-                    new_points[0, 0] -= points[-1, 0]
-                    new_points[0, 0] += points[-1, 1]
-                new_points[0, 1] = new_points[0, 0]
-                new_points[0, 0] = points[-1, 0]
-            self.add_line_to(new_points[0])
-            return
+                    new_points[0, 0] += cursor[0]
+                    for i in range(1, len(new_points)):
+                        new_points[i, 0] += new_points[i - 1, 0]
+                cursor = new_points[-1]
 
-        if command == "C":  # curveto
-            pass  # Yay! No action required
+            elif command == "V":
+                numbers = string_to_numbers(coord_string)
+                new_points = np.zeros((len(numbers), 3))
+                new_points[:, 1] = np.array(numbers)
+                new_points[:, 0] = cursor[0]
+                if isLower:
+                    new_points[0, 1] += cursor[1]
+                    for i in range(1, len(new_points)):
+                        new_points[i, 1] += new_points[i-1, 1]
+                cursor = new_points[-1]
+
+            elif command == "L":
+                numbers = string_to_numbers(coord_string)
+                new_points = np.zeros((len(numbers) // 2, 3))
+                new_points[:, :2] = np.array(numbers).reshape((-1, 2))
+                if isLower:
+                    new_points[0] += cursor
+                    for i in range(1, len(new_points)):
+                        new_points[i] += new_points[i - 1]
+                cursor = new_points[-1]
+
+            for lp in new_points:
+                self.add_line_to(lp)
+            return cursor
+
+        elif command == "C":  # curveto
+            numbers = string_to_numbers(coord_string)
+            new_points = np.zeros((len(numbers) // 2, 3))
+            new_points[:, :2] = np.array(numbers).reshape((-1, 2))
+            for i in range(0, len(new_points), 3):
+                if isLower:
+                    new_points[i:i + 3] += cursor
+                self.add_cubic_bezier_curve_to(*new_points[i:i + 3])
+                cursor = new_points[i + 2]
+
+            return cursor
+
         elif command in ["S", "T"]:  # smooth curveto
+            numbers = string_to_numbers(coord_string)
+            new_points = np.zeros((len(numbers) // 2, 3))
+            new_points[:, :2] = np.array(numbers).reshape((-1, 2))
+            # FIXME: not working for multiple points
+            if isLower:
+                new_points += cursor
             self.add_smooth_curve_to(*new_points)
             # handle1 = points[-1] + (points[-1] - points[-2])
             # new_points = np.append([handle1], new_points, axis=0)
-            return
+            cursor = new_points[-1]
+            return cursor
         elif command == "Q":  # quadratic Bezier curve
+            raise RuntimeError("Not implemented")
             # TODO, this is a suboptimal approximation
-            new_points = np.append([new_points[0]], new_points, axis=0)
+            # new_points = np.append([new_points[0]], new_points, axis=0)
         elif command == "A":  # elliptical Arc
             raise RuntimeError("Not implemented")
         elif command == "Z":  # closepath
-            return
-
-        # Add first three points
-        self.add_cubic_bezier_curve_to(*new_points[0:3])
-
-        # Handle situations where there's multiple relative control points
-        if len(new_points) > 3:
-            # Add subsequent offset points relatively.
-            for i in range(3, len(new_points), 3):
-                if isLower:
-                    new_points[i:i + 3] -= points[-1]
-                    new_points[i:i + 3] += new_points[i - 1]
-                self.add_cubic_bezier_curve_to(*new_points[i:i+3])
+            return cursor
 
     def string_to_points(self, coord_string):
         numbers = string_to_numbers(coord_string)

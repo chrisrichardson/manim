@@ -6,51 +6,56 @@ class SomeEquations(Scene):
 
     def construct(self):
 
-        poisson = TexMobject(r"\nabla^2 u = \rho")
-        poisson_text = TextMobject("Poisson's Equation")
+        cam_size = self.camera.pixel_array.shape
+        image = ImageMobject("woven.jpg")
+        pil_image = image.get_pil_image(fit=cam_size[:2])
+        self.camera.set_background(np.array(pil_image))
 
-        VGroup(poisson, poisson_text).arrange(DOWN)
+        poisson = TexMobject(r"\nabla^2 u = \rho", color=BLACK)
+        poisson_text = TextMobject("Poisson's Equation", color=BLACK)
+
+        VGroup(poisson, poisson_text).arrange(DOWN).scale(2.0)
         self.play(Write(poisson), FadeInFrom(poisson_text, DOWN))
-        self.wait(5)
+        self.wait(2)
 
-        maxwell = VGroup(TexMobject(r"\nabla\times B = \mu_0 (J + \epsilon_0 \dot E)"),
-                         TexMobject(r"\nabla\cdot B = 0"),
-                         TexMobject(r"\nabla\times E = -\dot B"),
-                         TexMobject(r"\nabla\cdot E = {\rho\over\epsilon_0}")
+        maxwell = VGroup(TexMobject(r"\nabla\times B = \mu_0 (J + \epsilon_0 \dot E)", color=BLACK),
+                         TexMobject(r"\nabla\cdot B = 0", color=BLACK),
+                         TexMobject(r"\nabla\times E = -\dot B", color=BLACK),
+                         TexMobject(r"\nabla\cdot E = {\rho\over\epsilon_0}", color=BLACK)
         ).arrange(DOWN)
-        maxwell_text = TextMobject("Maxwell's Equations")
-        VGroup(maxwell, maxwell_text).arrange(DOWN)
+        maxwell_text = TextMobject("Maxwell's Equations", color=BLACK)
+        VGroup(maxwell, maxwell_text).arrange(DOWN).scale(1.5)
 
         self.play(ReplacementTransform(poisson, maxwell),
                   ReplacementTransform(poisson_text, maxwell_text))
 
         self.wait()
 
-        lin_eq = VGroup(TexMobject(r"\epsilon = {1\over 2}(\nabla u + \nabla u^T)"),
-                         TexMobject(r"\sigma = C_{ijkl} \epsilon"),
-                         TexMobject(r"\nabla \cdot \sigma = f")
+        lin_eq = VGroup(TexMobject(r"\epsilon = \frac{1}{2}(\nabla u + \nabla u^T)", color=BLACK),
+                         TexMobject(r"\sigma_{ij} = C_{ijkl} \epsilon_{kl}", color=BLACK),
+                         TexMobject(r"\nabla \cdot \sigma = f", color=BLACK)
         ).arrange(DOWN)
-        lin_text = TextMobject("Linear Elasticity")
-        VGroup(lin_eq, lin_text).arrange(DOWN)
+        lin_text = TextMobject("Linear Elasticity", color=BLACK)
+        VGroup(lin_eq, lin_text).arrange(DOWN).scale(1.5)
 
         self.play(ReplacementTransform(maxwell, lin_eq),
                   ReplacementTransform(maxwell_text, lin_text))
 
         self.wait(5)
 
-        heat_eq = TexMobject(r"{\partial T \over \partial t} = \nabla\cdot k\nabla T")
-        heat_text = TextMobject("Heat Equation")
-        VGroup(heat_eq, heat_text).arrange(DOWN)
+        heat_eq = TexMobject(r"{\partial T \over \partial t} = \nabla\cdot k\nabla T", color=BLACK)
+        heat_text = TextMobject("Heat Equation", color=BLACK)
+        VGroup(heat_eq, heat_text).arrange(DOWN).scale(2.0)
 
         self.play(ReplacementTransform(lin_eq, heat_eq),
                   ReplacementTransform(lin_text, heat_text))
 
         self.wait()
 
-        ns_eq = VGroup(TexMobject(r"\rho\left({\partial u\over\partial t} + u\cdot\nabla u\right) - \mu\nabla^2 u + \nabla p = f"),
-                       TexMobject(r"\nabla \cdot u = 0")).arrange(DOWN)
-        ns_text = TextMobject("Incompressible Navier-Stokes")
-        VGroup(ns_eq, ns_text).arrange(DOWN)
+        ns_eq = VGroup(TexMobject(r"\rho\left({\partial u\over\partial t} + u\cdot\nabla u\right) - \mu\nabla^2 u + \nabla p = f", color=BLACK),
+                       TexMobject(r"\nabla \cdot u = 0", color=BLACK)).arrange(DOWN)
+        ns_text = TextMobject("Incompressible Navier-Stokes", color=BLACK)
+        VGroup(ns_eq, ns_text).arrange(DOWN).scale(1.5)
 
         self.play(ReplacementTransform(heat_eq, ns_eq),
                   ReplacementTransform(heat_text, ns_text))
@@ -63,15 +68,21 @@ class Moving(MovingCameraScene):
 
     def construct(self):
 
+        image = ImageMobject("woven.jpg")
+        cam_size = self.camera.pixel_array.shape
+        image = image.get_pil_image(fit=cam_size[:2])
+        self.camera.set_background(np.array(image))
+
         arc3 = CurvedArrow(np.array([0, 0, 0]),
                            np.array([1, 1, 0]))
         arc4 = CurvedDoubleArrow(np.array([0, 0, 0]),
                                  np.array([-1, -1, 0]))
 
-        img = SVGMobject('fenics_logo_text.svg')
-#        img = SVGMobject('m2.svg', stroke_width=0)
+#        img = SVGMobject('fenics_logo_text.svg', fill_color=BLACK)
+        img = SVGMobject('m2.svg', stroke_width=0)
 
         self.play(Write(img))
+        self.wait(5)
         return
 
         self.play(FadeIn(img), Write(arc3), Write(arc4))
@@ -234,14 +245,12 @@ class Simple(Scene):
         n = 20
 
         axes = Axes(x_min = -0.1, x_max = n,
-                    y_min = -0.1, y_max = 10)
-#                    number_line_config = {"include_tip" : False})
+                    y_min = -0.1, y_max = 10,
+                    number_line_config = {"include_tip" : True})
         axes.x_axis.add_numbers(*list(range(0, n + 1)))
         axes.y_axis.add_numbers(*list(range(0, 10)))
-#        axes.scale(0.5)
-        axes.to_edge(LEFT)
-
-        self.add(axes)
+        axes.scale(0.5)
+        axes.move_to(ORIGIN)
 
         phi = 0.0
         values = np.array([ 5*(1 + np.cos(TAU*x + phi)) for x in np.linspace(0, 3, n + 1)])
@@ -252,7 +261,7 @@ class Simple(Scene):
 
         self.set_variables_as_attrs(axes, graph)
 
-        self.play(FadeIn(graph))
+        self.play(ShowCreation(axes), FadeIn(graph))
         self.wait()
 
         t = 0
@@ -264,7 +273,7 @@ class Simple(Scene):
 
         graph.generate_target()
         phi = 0.1
-        for i in range(20):
+        for i in range(5):
             phi = 0.8*i
             t += 1
             values = np.array([ 5*(1 + np.cos(TAU*x + phi)) for x in np.linspace(0, 3, n + 1)])
@@ -337,3 +346,28 @@ class Simple(Scene):
 # camera_config=LOW_QUALITY_CAMERA_CONFIG
 # s = Simple(file_writer_config={'write_to_movie':True},
 #           camera_config=camera_config)
+
+
+class XYPlane(GraphScene):
+    CONFIG = {
+        "x_labeled_nums" : [0, 2, 4, 6, 8, 10],
+        "y_labeled_nums" : [0, 2, 4, 6, 8],
+    }
+
+    def construct(self):
+        self.setup_axes()
+        self.wander_continuously()
+
+    def wander_continuously(self):
+        path = VMobject().set_points_smoothly([
+            ORIGIN, 3*UP+RIGHT, 2*DOWN+RIGHT,
+            5*RIGHT, 4*RIGHT+UP, 3*RIGHT+2*DOWN,
+            DOWN+LEFT, 2*RIGHT
+        ])
+        point = self.coords_to_point(2, 5)
+        path.shift(point)
+
+        path.set_color(YELLOW)
+
+        self.play(ShowCreation(path, run_time = 10, rate_func=linear))
+        self.wait()

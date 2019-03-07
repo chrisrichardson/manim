@@ -16,6 +16,15 @@ from manimlib.utils.config_ops import digest_config
 from manimlib.utils.config_ops import digest_locals
 
 
+def get_style(element):
+    style = element.getAttribute('style')
+    sdict = {}
+    if style:
+        for s in style.split(";"):
+            s = s.split(":")
+            sdict[s[0].strip()] = s[1].strip()
+    return sdict
+
 def string_to_numbers(num_string):
     num_string = num_string.replace("-", ",-")
     num_string = num_string.replace("e,-", "e-")
@@ -61,6 +70,15 @@ class SVGMobject(VMobject):
                 return
         raise IOError("No file matching %s in image directory" %
                       self.file_name)
+
+    def get_fill_color(self, element):
+        fill_color = element.getAttribute("fill")
+        if not fill_color:
+            style = get_style(element)
+            fill_color = style.get("fill")
+        if not fill_color:
+            fill_color = self.fill_color
+        return fill_color
 
     def generate_points(self):
         doc = minidom.parse(self.file_path)
@@ -111,7 +129,8 @@ class SVGMobject(VMobject):
 
     def path_to_mobject(self, element):
         path_string = element.getAttribute('d')
-        fill_color = element.getAttribute('style')[5:]
+
+        fill_color = self.get_fill_color(element)
         return VMobjectFromSVGPathstring(path_string,
                                          fill_color=fill_color,
                                          fill_opacity=1.0)
@@ -132,11 +151,7 @@ class SVGMobject(VMobject):
     def polygon_to_mobject(self, polygon_element):
 
         path_string = polygon_element.getAttribute("points")
-        fill_color = polygon_element.getAttribute("fill")
-
-        # Black is white
-        if fill_color in ["#000", "#000000"]:
-            fill_color = WHITE
+        fill_color = self.get_fill_color(polygon_element)
 
         points = np.fromstring(path_string.replace(",", " "),
                                sep=' ', dtype=float)
@@ -159,8 +174,11 @@ class SVGMobject(VMobject):
             else 0.0
             for key in ("cx", "cy", "r")
         ]
+
+        fill_color = self.get_fill_color(circle_element)
+
         return Circle(radius=r, fill_opacity=1.0,
-                      fill_color=WHITE).shift(x * RIGHT + y * DOWN)
+                      fill_color=fill_color).shift(x * RIGHT + y * DOWN)
 
     def ellipse_to_mobject(self, circle_element):
         x, y, rx, ry = [
@@ -171,7 +189,8 @@ class SVGMobject(VMobject):
             else 0.0
             for key in ("cx", "cy", "rx", "ry")
         ]
-        return Circle().scale(rx * RIGHT + ry * UP).shift(x * RIGHT + y * DOWN)
+        fill_color = self.get_fill_color(circle_element)
+        return Circle(fill_color=fill_color).scale(rx * RIGHT + ry * UP).shift(x * RIGHT + y * DOWN)
 
     def rect_to_mobject(self, rect_element):
         fill_color = rect_element.getAttribute("fill")
@@ -180,11 +199,8 @@ class SVGMobject(VMobject):
         corner_radius = rect_element.getAttribute("rx")
 
         # input preprocessing
-        if fill_color in ["", "none", "#FFF", "#FFFFFF"] or Color(fill_color) == Color(WHITE):
-            opacity = 0
-            fill_color = BLACK  # shdn't be necessary but avoids error msgs
-        if fill_color in ["#000", "#000000"]:
-            fill_color = WHITE
+        fill_color = self.get_fill_color(rect_element)
+
         if stroke_color in ["", "none", "#FFF", "#FFFFFF"] or Color(stroke_color) == Color(WHITE):
             stroke_width = 0
             stroke_color = BLACK
@@ -209,7 +225,7 @@ class SVGMobject(VMobject):
                 stroke_width=stroke_width,
                 stroke_color=stroke_color,
                 fill_color=fill_color,
-                fill_opacity=opacity
+                fill_opacity=self.fill_opacity
             )
         else:
             mob = RoundedRectangle(
@@ -222,7 +238,7 @@ class SVGMobject(VMobject):
                 stroke_width=stroke_width,
                 stroke_color=stroke_color,
                 fill_color=fill_color,
-                fill_opacity=opacity,
+                fill_opacity=self.fill_opacity,
                 corner_radius=corner_radius
             )
 
@@ -334,14 +350,15 @@ class VMobjectFromSVGPathstring(VMobject):
             re.findall(pattern, self.path_string),
             re.split(pattern, self.path_string)[1:]
         ))
-        # Which mobject should new points be added to
-        cursor = np.zeros(3)
+
+        self._cursor = np.zeros(3)
         for command, coord_string in pairs:
-            cursor = self.handle_command(command, coord_string, cursor)
+            self.handle_command(command, coord_string)
+
         # people treat y-coordinate differently
         self.rotate(np.pi, RIGHT, about_point=ORIGIN)
 
-    def handle_command(self, command, coord_string, cursor):
+    def handle_command(self, command, coord_string):
 
         isLower = command.islower()
         command = command.upper()
@@ -351,56 +368,55 @@ class VMobjectFromSVGPathstring(VMobject):
             new_points = np.zeros((len(numbers) // 2, 3))
             new_points[:, :2] = np.array(numbers).reshape((-1, 2))
             if isLower:
-                new_points[0] += cursor
+                new_points[0] += self._cursor
                 for i in range(1, len(new_points)):
                     new_points[i] += new_points[i - 1]
-            cursor = new_points[-1]
+            self._cursor = new_points[-1]
 
             self.start_new_path(new_points[0])
-            if len(new_points) <= 1:
-                return cursor
+            self._path_start = new_points[0]
 
             for lp in new_points[1:]:
                 self.add_line_to(lp)
 
-            return cursor
+            return
 
         elif command in ["L", "H", "V"]:  # lineto
             if command == "H":
                 numbers = string_to_numbers(coord_string)
                 new_points = np.zeros((len(numbers), 3))
                 new_points[:, 0] = np.array(numbers)
-                new_points[:, 1] = cursor[1]
+                new_points[:, 1] = self._cursor[1]
                 if isLower:
-                    new_points[0, 0] += cursor[0]
+                    new_points[0, 0] += self._cursor[0]
                     for i in range(1, len(new_points)):
                         new_points[i, 0] += new_points[i - 1, 0]
-                cursor = new_points[-1]
+                self._cursor = new_points[-1]
 
             elif command == "V":
                 numbers = string_to_numbers(coord_string)
                 new_points = np.zeros((len(numbers), 3))
                 new_points[:, 1] = np.array(numbers)
-                new_points[:, 0] = cursor[0]
+                new_points[:, 0] = self._cursor[0]
                 if isLower:
-                    new_points[0, 1] += cursor[1]
+                    new_points[0, 1] += self._cursor[1]
                     for i in range(1, len(new_points)):
                         new_points[i, 1] += new_points[i-1, 1]
-                cursor = new_points[-1]
+                self._cursor = new_points[-1]
 
             elif command == "L":
                 numbers = string_to_numbers(coord_string)
                 new_points = np.zeros((len(numbers) // 2, 3))
                 new_points[:, :2] = np.array(numbers).reshape((-1, 2))
                 if isLower:
-                    new_points[0] += cursor
+                    new_points[0] += self._cursor
                     for i in range(1, len(new_points)):
                         new_points[i] += new_points[i - 1]
-                cursor = new_points[-1]
+                self._cursor = new_points[-1]
 
             for lp in new_points:
                 self.add_line_to(lp)
-            return cursor
+            return
 
         elif command == "C":  # curveto
             numbers = string_to_numbers(coord_string)
@@ -408,11 +424,11 @@ class VMobjectFromSVGPathstring(VMobject):
             new_points[:, :2] = np.array(numbers).reshape((-1, 2))
             for i in range(0, len(new_points), 3):
                 if isLower:
-                    new_points[i:i + 3] += cursor
+                    new_points[i:i + 3] += self._cursor
                 self.add_cubic_bezier_curve_to(*new_points[i:i + 3])
-                cursor = new_points[i + 2]
+                self._cursor = new_points[i + 2]
 
-            return cursor
+            return
 
         elif command in ["S", "T"]:  # smooth curveto
             numbers = string_to_numbers(coord_string)
@@ -420,12 +436,12 @@ class VMobjectFromSVGPathstring(VMobject):
             new_points[:, :2] = np.array(numbers).reshape((-1, 2))
             # FIXME: not working for multiple points
             if isLower:
-                new_points += cursor
+                new_points += self._cursor
             self.add_smooth_curve_to(*new_points)
             # handle1 = points[-1] + (points[-1] - points[-2])
             # new_points = np.append([handle1], new_points, axis=0)
-            cursor = new_points[-1]
-            return cursor
+            self._cursor = new_points[-1]
+            return
         elif command == "Q":  # quadratic Bezier curve
             raise RuntimeError("Not implemented")
             # TODO, this is a suboptimal approximation
@@ -433,16 +449,8 @@ class VMobjectFromSVGPathstring(VMobject):
         elif command == "A":  # elliptical Arc
             raise RuntimeError("Not implemented")
         elif command == "Z":  # closepath
-            return cursor
-
-    def string_to_points(self, coord_string):
-        numbers = string_to_numbers(coord_string)
-        if len(numbers) % 2 == 1:
-            numbers.append(0)
-        num_points = len(numbers) // 2
-        result = np.zeros((num_points, self.dim))
-        result[:, :2] = np.array(numbers).reshape((num_points, 2))
-        return result
+            self._cursor = self._path_start
+            return
 
     def get_original_path_string(self):
         return self.path_string

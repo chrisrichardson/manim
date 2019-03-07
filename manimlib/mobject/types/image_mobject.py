@@ -79,6 +79,23 @@ class ImageMobject(AbstractImageMobject):
     def get_pixel_array(self):
         return self.pixel_array
 
+    def get_pil_image(self, fit=None):
+        img = Image.fromarray(self.pixel_array, self.image_mode)
+
+        if fit is not None:
+            assert len(fit) == 2
+            img_aspect = img.size[1]/img.size[0]
+            fit_aspect = fit[0]/fit[1]
+            if (fit_aspect < img_aspect):
+                dx = (img.size[1] - img.size[0] * fit_aspect)//2
+                img = img.crop((0, dx, img.size[0], img.size[1] - dx))
+            elif (fit_aspect > img_aspect):
+                dx = (img.size[0] - img.size[1] * fit_aspect)//2
+                img = img.crop((dx, 0, img.size[0] - dx, img.size[1]))
+            img = img.resize((fit[1], fit[0]), Image.ANTIALIAS)
+
+        return img
+
     def set_color(self, color, alpha=None, family=True):
         rgb = color_to_int_rgb(color)
         self.pixel_array[:, :, :3] = rgb

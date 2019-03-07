@@ -1,6 +1,7 @@
 from manimlib.constants import YELLOW, FRAME_X_RADIUS
 import numpy as np
 from manimlib.mobject.types.vectorized_mobject import VMobject
+from manimlib.mobject.geometry import Dot
 from manimlib.utils.config_ops import digest_config
 
 
@@ -11,7 +12,7 @@ class ParametricFunction(VMobject):
         # TODO, be smarter about choosing this number
         "step_size": 0.01,
         "dt": 1e-8,
-        # TODO, be smar about figuring these out?
+        # TODO, be smart about figuring these out?
         "discontinuities": [],
         "smoothing": True
     }
@@ -98,6 +99,7 @@ class DiscreteFunction(VMobject):
 
     def set_values(self, values):
         self.values = values
+        self.submobjects = []
         self.generate_points()
 
     def get_values(self):
@@ -107,4 +109,9 @@ class DiscreteFunction(VMobject):
         self.clear_points()
         self.start_new_path(self.values[0])
         self.add_points_as_corners(self.values[1:])
+
+        for p in self.values:
+            dot = Dot(p, fill_color=self.color)
+            self.add(dot)
+
         return self

@@ -1,9 +1,12 @@
 import itertools as it
+import numpy as np
 
 from manimlib.animation.creation import Write, DrawBorderThenFill, ShowCreation
 from manimlib.animation.transform import Transform
 from manimlib.animation.update import UpdateFromAlphaFunc
-from manimlib.constants import *
+from manimlib.constants import DOWN, LEFT, UP, RIGHT
+from manimlib.constants import SMALL_BUFF, MED_SMALL_BUFF, FRAME_Y_RADIUS
+from manimlib.constants import BLUE, GREEN, YELLOW, GREY, BLACK, WHITE
 from manimlib.mobject.functions import ParametricFunction
 from manimlib.mobject.geometry import Line
 from manimlib.mobject.geometry import Rectangle
@@ -76,12 +79,14 @@ class GraphScene(Scene):
             tick_frequency=self.x_tick_frequency,
             leftmost_tick=self.x_leftmost_tick,
             numbers_with_elongated_ticks=self.x_labeled_nums,
-            color=self.axes_color
+            color=self.axes_color,
+            include_tip=True
         )
         x_axis.shift(self.graph_origin - x_axis.number_to_point(0))
         if len(self.x_labeled_nums) > 0:
             if self.exclude_zero_label:
-                self.x_labeled_nums = [x for x in self.x_labeled_nums if x != 0]
+                self.x_labeled_nums = [x for x in
+                                       self.x_labeled_nums if x != 0]
             x_axis.add_numbers(*self.x_labeled_nums)
         if self.x_axis_label:
             x_label = TextMobject(self.x_axis_label)
@@ -108,13 +113,14 @@ class GraphScene(Scene):
             leftmost_tick=self.y_bottom_tick,
             numbers_with_elongated_ticks=self.y_labeled_nums,
             color=self.axes_color,
-            line_to_number_vect=LEFT,
+            label_direction=LEFT
         )
         y_axis.shift(self.graph_origin - y_axis.number_to_point(0))
         y_axis.rotate(np.pi / 2, about_point=y_axis.number_to_point(0))
         if len(self.y_labeled_nums) > 0:
             if self.exclude_zero_label:
-                self.y_labeled_nums = [y for y in self.y_labeled_nums if y != 0]
+                self.y_labeled_nums = [y for y
+                                       in self.y_labeled_nums if y != 0]
             y_axis.add_numbers(*self.y_labeled_nums)
         if self.y_axis_label:
             y_label = TextMobject(self.y_axis_label)
@@ -427,7 +433,8 @@ class GraphScene(Scene):
             group.df_label.set_color(group.df_line.get_color())
 
         if include_secant_line:
-            secant_line_color = secant_line_color or self.default_derivative_color
+            secant_line_color = secant_line_color \
+                                or self.default_derivative_color
             group.secant_line = Line(p1, p2, color=secant_line_color)
             group.secant_line.scale_in_place(
                 secant_line_length / group.secant_line.get_length()
@@ -436,7 +443,8 @@ class GraphScene(Scene):
 
         return group
 
-    def add_T_label(self, x_val, side=RIGHT, label=None, color=WHITE, animated=False, **kwargs):
+    def add_T_label(self, x_val, side=RIGHT, label=None,
+                    color=WHITE, animated=False, **kwargs):
         triangle = RegularPolygon(n=3, start_angle=np.pi / 2)
         triangle.set_height(MED_SMALL_BUFF)
         triangle.move_to(self.coords_to_point(x_val, 0), UP)
@@ -492,7 +500,8 @@ class GraphScene(Scene):
         group.add(self.right_T_label_group)
 
         def update_group(group, alpha):
-            area, left_v_line, left_T_label, right_v_line, right_T_label = group
+            (area, left_v_line, left_T_label,
+             right_v_line, right_T_label) = group
             t_min = interpolate(curr_t_min, new_t_min, alpha)
             t_max = interpolate(curr_t_max, new_t_max, alpha)
             new_area = self.get_area(graph, t_min, t_max)

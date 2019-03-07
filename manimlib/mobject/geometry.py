@@ -42,9 +42,9 @@ class TipableVMobject(VMobject):
 
     def add_tip(self, tip_length=None, at_start=False):
         tip = self.create_tip(tip_length, at_start)
-        self.reset_endpoints_based_on_tip(tip, at_start)
-        self.assign_tip_attr(tip, at_start)
-        self.add(tip)
+#        self.reset_endpoints_based_on_tip(tip, at_start)
+#        self.assign_tip_attr(tip, at_start)
+#        self.add(tip)
         return self
 
     def create_tip(self, tip_length=None, at_start=False):
@@ -543,22 +543,22 @@ class Elbow(VMobject):
 
 class Arrow(Line):
     CONFIG = {
-        "stroke_width": 6,
+#        "stroke_width": 6,
         "buff": MED_SMALL_BUFF,
-        "tip_width_to_length_ratio": 1,
-        "max_tip_length_to_length_ratio": 0.2,
-        "max_stroke_width_to_length_ratio": 6,
-        "preserve_tip_size_when_scaling": True,
-        "rectangular_stem_width": 0.05,
+#        "tip_width_to_length_ratio": 1,
+#        "max_tip_length_to_length_ratio": 0.2,
+#        "max_stroke_width_to_length_ratio": 6,
+#        "preserve_tip_size_when_scaling": True,
+#        "rectangular_stem_width": 0.05,
     }
 
     def __init__(self, *args, **kwargs):
         Line.__init__(self, *args, **kwargs)
         # TODO, should this be affected when
         # Arrow.set_stroke is called?
-        self.initial_stroke_width = self.stroke_width
-        self.add_tip()
-        self.set_stroke_width_from_length()
+#        self.initial_stroke_width = self.stroke_width
+#        self.add_tip()
+#        self.set_stroke_width_from_length()
 
     def scale(self, factor, **kwargs):
         has_tip = self.has_tip()

@@ -41,16 +41,19 @@ class TipableVMobject(VMobject):
     """
 
     def add_tip(self, tip_length=None, at_start=False):
-        tip = self.create_tip(tip_length, at_start)
-#        self.reset_endpoints_based_on_tip(tip, at_start)
-#        self.assign_tip_attr(tip, at_start)
-#        self.add(tip)
-        return self
 
-    def create_tip(self, tip_length=None, at_start=False):
-        tip = self.get_unpositioned_tip(tip_length)
-        self.position_tip(tip, at_start)
-        return tip
+        if at_start:
+            start_tip = self.get_unpositioned_tip(tip_length)
+            self.position_tip(start_tip, True)
+        else:
+            start_tip = None
+
+        end_tip = self.get_unpositioned_tip(tip_length)
+        self.position_tip(end_tip, False)
+
+        self.reset_endpoints_based_on_tip(start_tip, end_tip)
+
+        return self
 
     def get_unpositioned_tip(self, tip_length=None):
         if tip_length is None:
@@ -58,7 +61,7 @@ class TipableVMobject(VMobject):
         color = self.get_color()
         style = {
             "fill_color": color,
-            "stroke_color": color
+            "stroke_color": color,
         }
         style.update(self.tip_style)
         tip = ArrowTip(length=tip_length, **style)
@@ -80,19 +83,26 @@ class TipableVMobject(VMobject):
         tip.shift(anchor - tip.get_tip_point())
         return tip
 
-    def reset_endpoints_based_on_tip(self, tip, at_start):
+    def reset_endpoints_based_on_tip(self, start_tip, end_tip):
         if self.get_length() == 0:
             # Zero length, put_start_and_end_on wouldn't
             # work
             return self
-        if at_start:
-            self.put_start_and_end_on(
-                tip.get_base(), self.get_end()
-            )
+        if start_tip and end_tip:
+            self.put_start_and_end_on(start_tip.get_base(), end_tip.get_base())
+            self.start_tip = start_tip
+            self.add(start_tip)
+            self.tip = end_tip
+            self.add(end_tip)
+        elif start_tip:
+            self.put_start_and_end_on(start_tip.get_base(), self.get_end())
+            self.start_tip = start_tip
+            self.add(start_tip)
         else:
-            self.put_start_and_end_on(
-                self.get_start(), tip.get_base(),
-            )
+            self.put_start_and_end_on(self.get_start(), end_tip.get_base())
+            self.tip = end_tip
+            self.add(end_tip)
+
         return self
 
     def assign_tip_attr(self, tip, at_start):
@@ -543,37 +553,37 @@ class Elbow(VMobject):
 
 class Arrow(Line):
     CONFIG = {
-#        "stroke_width": 6,
-        "buff": MED_SMALL_BUFF,
-#        "tip_width_to_length_ratio": 1,
-#        "max_tip_length_to_length_ratio": 0.2,
-#        "max_stroke_width_to_length_ratio": 6,
-#        "preserve_tip_size_when_scaling": True,
-#        "rectangular_stem_width": 0.05,
+        "stroke_width": 6,
+        "tip_width_to_length_ratio": 1,
+        "max_tip_length_to_length_ratio": 0.2,
+        "max_stroke_width_to_length_ratio": 6,
+        "preserve_tip_size_when_scaling": True,
+        "rectangular_stem_width": 0.05,
+        "make_amends": False
     }
 
     def __init__(self, *args, **kwargs):
         Line.__init__(self, *args, **kwargs)
         # TODO, should this be affected when
         # Arrow.set_stroke is called?
-#        self.initial_stroke_width = self.stroke_width
-#        self.add_tip()
-#        self.set_stroke_width_from_length()
-
-    def scale(self, factor, **kwargs):
-        has_tip = self.has_tip()
-        has_start_tip = self.has_start_tip()
-        if has_tip or has_start_tip:
-            self.pop_tips()
-
-        VMobject.scale(self, factor, **kwargs)
+        self.initial_stroke_width = self.stroke_width
+        self.add_tip(at_start=self.make_amends)
         self.set_stroke_width_from_length()
 
-        if has_tip:
-            self.add_tip()
-        if has_start_tip:
-            self.add_tip(at_start=True)
-        return self
+    # def scale(self, factor, **kwargs):
+    #     has_tip = self.has_tip()
+    #     has_start_tip = self.has_start_tip()
+    #     if has_tip or has_start_tip:
+    #         self.pop_tips()
+
+    #     VMobject.scale(self, factor, **kwargs)
+    #     self.set_stroke_width_from_length()
+
+    #     if has_tip:
+    #         self.add_tip()
+    #     if has_start_tip:
+    #         self.add_tip(at_start=True)
+    #     return self
 
     def get_normal_vector(self):
         p0, p1, p2 = self.tip.get_start_anchors()[:3]
@@ -596,6 +606,7 @@ class Arrow(Line):
             self.initial_stroke_width,
             max_ratio * self.get_length(),
         ))
+        self.get_tips().set_stroke(width=0)
         return self
 
     # TODO, should this be the default for everything?
@@ -616,9 +627,9 @@ class Vector(Arrow):
 
 
 class DoubleArrow(Arrow):
+    CONFIG = {"make_amends": True}
     def __init__(self, *args, **kwargs):
         Arrow.__init__(self, *args, **kwargs)
-        self.add_tip(at_start=True)
 
 
 class CubicBezier(VMobject):

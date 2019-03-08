@@ -72,7 +72,7 @@ class DecimalNumber(VMobject):
     def get_formatter(self, **kwargs):
         """
         Configuration is based first off instance attributes,
-        but overwritten by any kew word argument.  Relevant
+        but overwritten by any key word argument.  Relevant
         key words:
         - include_sign
         - group_with_commas

@@ -7,7 +7,7 @@ class SomeEquations(Scene):
     def construct(self):
 
         cam_size = self.camera.pixel_array.shape
-        image = ImageMobject("woven.jpg")
+        image = ImageMobject("paper_background2.jpg")
         pil_image = image.get_pil_image(fit=cam_size[:2])
         self.camera.set_background(np.array(pil_image))
 
@@ -68,7 +68,7 @@ class Moving(MovingCameraScene):
 
     def construct(self):
 
-        image = ImageMobject("woven.jpg")
+        image = ImageMobject("paper_background1.jpg")
         cam_size = self.camera.pixel_array.shape
         image = image.get_pil_image(fit=cam_size[:2])
         self.camera.set_background(np.array(image))
